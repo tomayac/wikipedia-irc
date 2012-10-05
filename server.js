@@ -90,9 +90,9 @@ client.addListener('message', function(from, to, message) {
             }
           }
           if (allEditsInShortDistances) {
-            console.log('[ ★ ] Breaking news candidate: "' + article + '" ' + 
+            console.log('[ ★ ] Breaking news candidate: "' + article + '". ' + 
                 articles[article].occurrences +
-                ' times seen: "' + article + '".' +
+                ' times seen.' +
                 ' Edit intervals: ' + articles[article].intervals.toString()
                 .replace(/(\d+),?/g, '$1ms '));
           }

@@ -1,4 +1,4 @@
-var VERBOUS = false;
+var VERBOUS = true;
 
 // an article is thrown out of the monitoring loop if its last edit is longer 
 // ago than SECONDS_SINCE_LAST_EDIT seconds
@@ -30,6 +30,16 @@ client.addListener('message', function(from, to, message) {
   if (from === 'rc-pmtpa') {
     var regex = /\x0314\[\[\x0307(.+?)\x0314\]\]\x034.+?$/;
     var article = message.replace(regex, '$1');
+    
+    // get the editor's username or IP address
+    // the IRC log format is as follows:
+    // rc-pmtpa: [[Juniata River]] http://en.wikipedia.org/w/index.php?diff=516269072&oldid=514659029 * Johanna-Hypatia * (+67) Category:Place names of Native American origin in Pennsylvania
+    var editor = message.split('*')[1]
+        .replace(/^\s+/, '')
+        .replace(/\x0303/, '')
+        .replace(/\x035/, '')
+        .replace(/\s+$/, '');
+
     // check that we have an edit of an article
     // namespaces come from http://www.mediawiki.org/wiki/Help:Namespaces
     // also exclude "Wikipedia" and "Wikipedia talk"
@@ -58,7 +68,8 @@ client.addListener('message', function(from, to, message) {
         articles[article] = {
           timestamp: new Date().getTime(),
           occurrences: 1,
-          intervals: []
+          intervals: [],
+          editors: [editor]
         };
         if (VERBOUS) {
           console.log('[ * ] First time seen: "' + article + '"');
@@ -70,11 +81,15 @@ client.addListener('message', function(from, to, message) {
         var now = new Date().getTime();
         articles[article].intervals.push(now - articles[article].timestamp);
         articles[article].timestamp = now;
+        if (articles[article].editors.indexOf(editor) === false) {
+          articles[article].editors.push(editor);
+        }
         if (VERBOUS) {
           console.log('[ ! ] ' + articles[article].occurrences +
               ' times seen: "' + article + '".' +
               ' Edit intervals: ' + articles[article].intervals.toString()
-              .replace(/(\d+),?/g, '$1ms '));
+              .replace(/(\d+),?/g, '$1ms ').trim() + '. ' +
+              ' Number of editors: ' + articles[article].editors.length + '.');
         }
         if (articles[article].occurrences >= BREAKING_NEWS_THRESHOLD) {
           // check interval distances between edits
@@ -89,12 +104,17 @@ client.addListener('message', function(from, to, message) {
               break;
             }
           }
-          if (allEditsInShortDistances) {
+          // check if at least two editors made edits at roughly the same time
+          numberOfEditors = articles[article].editors.length;
+          if ((allEditsInShortDistances) &&
+              (numberOfEditors >= 2)) {
             console.log('[ ★ ] Breaking news candidate: "' + article + '". ' + 
                 articles[article].occurrences +
                 ' times seen.' +
                 ' Edit intervals: ' + articles[article].intervals.toString()
-                .replace(/(\d+),?/g, '$1ms '));
+                .replace(/(\d+),?/g, '$1ms ').trim() + '. ' +
+                ' Number of editors: ' +
+                articles[article].editors.length + '.');
           }
         }
       }

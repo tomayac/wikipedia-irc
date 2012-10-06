@@ -63,7 +63,8 @@ client.addListener('message', function(from, to, message) {
         (article.indexOf('Wikipedia:') !== 0) &&
         (article.indexOf('Wikipedia talk:') !== 0)) {
       article = article.replace(/\s/g, '_');
-      // new article    
+      // new article
+      var now;
       if (!articles[article]) {
         articles[article] = {
           timestamp: new Date().getTime(),
@@ -78,7 +79,7 @@ client.addListener('message', function(from, to, message) {
       } else {
         // update statistics of the article
         articles[article].occurrences += 1;
-        var now = new Date().getTime();
+        now = new Date().getTime();
         articles[article].intervals.push(now - articles[article].timestamp);
         articles[article].timestamp = now;
         if (articles[article].editors.indexOf(editor) === -1) {
@@ -97,7 +98,7 @@ client.addListener('message', function(from, to, message) {
           // distances must be below a certain threshold
           var intervals = articles[article].intervals;
           var allEditsInShortDistances = false;
-          for (i = 0, len = intervals.length; i < len; i++) {
+          for (var i = 0, len = intervals.length; i < len; i++) {
             if (intervals[i] <= SECONDS_BETWEEN_EDITS * 1000) {
               allEditsInShortDistances = true;
             } else {
@@ -105,7 +106,7 @@ client.addListener('message', function(from, to, message) {
             }
           }
           // check if at least two editors made edits at roughly the same time
-          numberOfEditors = articles[article].editors.length;
+          var numberOfEditors = articles[article].editors.length;
           if ((allEditsInShortDistances) &&
               (numberOfEditors >= 2)) {
             console.log('[ ★ ] Breaking news candidate: "' + article + '". ' + 
@@ -119,8 +120,8 @@ client.addListener('message', function(from, to, message) {
         }
       }
       // clean-up
-      for (key in articles) {
-        var now = new Date().getTime();
+      for (var key in articles) {
+        now = new Date().getTime();
         if (now - articles[key].timestamp > SECONDS_SINCE_LAST_EDIT * 1000) {
           delete articles[key];
           if (VERBOUS) {

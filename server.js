@@ -81,14 +81,14 @@ client.addListener('message', function(from, to, message) {
         var now = new Date().getTime();
         articles[article].intervals.push(now - articles[article].timestamp);
         articles[article].timestamp = now;
-        if (articles[article].editors.indexOf(editor) === false) {
+        if (articles[article].editors.indexOf(editor) === -1) {
           articles[article].editors.push(editor);
         }
         if (VERBOUS) {
           console.log('[ ! ] ' + articles[article].occurrences +
               ' times seen: "' + article + '".' +
               ' Edit intervals: ' + articles[article].intervals.toString()
-              .replace(/(\d+),?/g, '$1ms ').trim() + '. ' +
+              .replace(/(\d+),?/g, '$1ms ').trim() + '.' +
               ' Number of editors: ' + articles[article].editors.length + '.');
         }
         if (articles[article].occurrences >= BREAKING_NEWS_THRESHOLD) {
@@ -112,7 +112,7 @@ client.addListener('message', function(from, to, message) {
                 articles[article].occurrences +
                 ' times seen.' +
                 ' Edit intervals: ' + articles[article].intervals.toString()
-                .replace(/(\d+),?/g, '$1ms ').trim() + '. ' +
+                .replace(/(\d+),?/g, '$1ms ').trim() + '.' +
                 ' Number of editors: ' +
                 articles[article].editors.length + '.');
           }

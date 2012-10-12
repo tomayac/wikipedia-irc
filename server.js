@@ -173,11 +173,7 @@ client.addListener('message', function(from, to, message) {
         }
         article = articleVersionsMap[article];
         // update statistics of the article
-        try {
-          articles[article].occurrences += 1;
-        } catch(e) {
-          console.log('Failed at ' + article); // ficken
-        }
+        articles[article].occurrences += 1;
         now = new Date().getTime();
         articles[article].intervals.push(now - articles[article].timestamp);
         articles[article].timestamp = now;
@@ -216,7 +212,10 @@ client.addListener('message', function(from, to, message) {
           var numberOfEditors = articles[article].editors.length;
           if ((allEditsInShortDistances) &&
               (numberOfEditors >= 2)) {
-            console.log('[ ★ ] Breaking news candidate: "' + article + '". ' +
+            var red = '\u001b[31m';
+            var reset = '\u001b[0m';
+            console.log(red + '[ ★ ] Breaking news candidate: "' +
+                article + '". ' +
                 articles[article].occurrences + ' ' +
                 'times seen. ' +
                 'Timestamp: ' + new Date(articles[article].timestamp) + '. ' +
@@ -225,7 +224,8 @@ client.addListener('message', function(from, to, message) {
                 'Number of editors: ' +
                 articles[article].editors.length + '. ' +
                 'Editors: ' + articles[article].editors + '. ' +
-                'Languages: ' + JSON.stringify(articles[article].languages));
+                'Languages: ' + JSON.stringify(articles[article].languages) +
+                reset);
           }
         }
       }
@@ -235,7 +235,7 @@ client.addListener('message', function(from, to, message) {
         if (now - articles[key].timestamp > SECONDS_SINCE_LAST_EDIT * 1000) {
           delete articles[key];
           for (version in articleClusters[key]) {
-            delete articleVersionsMap[key];
+            delete articleVersionsMap[version];
           }
           delete articleClusters[key];
           delete articleVersionsMap[key];

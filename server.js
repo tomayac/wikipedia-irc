@@ -124,6 +124,13 @@ client.addListener('message', function(from, to, message) {
         .replace(/\u0003/g, '')
         .replace(/^\s*/, '')
         .replace(/\s*$/, '');
+    // discard edits made by bots.
+    // bots must identify themselves by prefixing or suffixing their username
+    // with "bot". 
+    // http://en.wikipedia.org/wiki/Wikipedia:Bot_policy#Bot_accounts
+    if (/^bot/i.test(editor) || /bot$/i.test(editor)) {
+      return;
+    }
 
     // discard non-article namespaces, as listed here:
     // http://www.mediawiki.org/wiki/Help:Namespaces

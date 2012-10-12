@@ -2,8 +2,10 @@ var irc = require('irc');
 var request = require('request');
 var express = require('express');
 
-// very verbous debug mode
-var VERBOUS = false;
+// verbous debug mode
+var VERBOUS = true;
+// really very verbous debug mode
+var REALLY_VERBOUS = false;
 
 // whether to only monitor the 1,000,000+ articles Wikipedias,
 // or also the 100,000+ articles Wikipedias.
@@ -148,7 +150,7 @@ client.addListener('message', function(from, to, message) {
       });
       article = language + ':' + article;
       // new article
-      if (!articles[article]) {
+      if (!articleVersionsMap[article]) {
         articles[article] = {
           timestamp: new Date().getTime(),
           occurrences: 1,
@@ -157,11 +159,19 @@ client.addListener('message', function(from, to, message) {
           languages: {}
         };
         articles[article].languages[language] = 1;
-        if (VERBOUS) {
-          console.log('[ * ] First time seen: "' + article + '"');
+        if (VERBOUS && REALLY_VERBOUS) {
+          console.log('[ * ] First time seen: "' + article + '". ' +
+              'Timestamp: ' + new Date(articles[article].timestamp) + '. ' +
+              'Editor: ' + editor + '. ' +
+              'Languages: ' + JSON.stringify(articles[article].languages));
         }
       // existing article  
       } else {
+        var oldArticle = article;
+        article = articleVersionsMap[article];
+        if (VERBOUS) {
+          console.log('[ ⚭ ] Merging ' + oldArticle + ' with ' + article);
+        }
         // update statistics of the article
         articles[article].occurrences += 1;
         now = new Date().getTime();
@@ -176,11 +186,14 @@ client.addListener('message', function(from, to, message) {
           articles[article].languages[language] = 1;
         }
         if (VERBOUS) {
-          console.log('[ ! ] ' + articles[article].occurrences +
-              ' times seen: "' + article + '".' +
-              ' Edit intervals: ' + articles[article].intervals.toString()
-              .replace(/(\d+),?/g, '$1ms ').trim() + '.' +
-              ' Number of editors: ' + articles[article].editors.length + '.');
+          console.log('[ ! ] ' + articles[article].occurrences + ' ' +
+              'times seen: "' + article + '". ' +
+              'Edit intervals: ' + articles[article].intervals.toString()
+              .replace(/(\d+),?/g, '$1ms ').trim() + '. ' +
+              'Number of editors: ' + articles[article].editors.length + '. ' +
+              'Timestamp: ' + new Date(articles[article].timestamp) + '. ' +
+              'Editors: ' + articles[article].editors + '. ' +
+              'Languages: ' + JSON.stringify(articles[article].languages));
         }
         if (articles[article].occurrences >= BREAKING_NEWS_THRESHOLD) {
           // check interval distances between edits
@@ -199,12 +212,12 @@ client.addListener('message', function(from, to, message) {
           var numberOfEditors = articles[article].editors.length;
           if ((allEditsInShortDistances) &&
               (numberOfEditors >= 2)) {
-            console.log('[ ★ ] Breaking news candidate: "' + article + '". ' + 
-                articles[article].occurrences +
-                ' times seen.' +
-                ' Edit intervals: ' + articles[article].intervals.toString()
-                .replace(/(\d+),?/g, '$1ms ').trim() + '.' +
-                ' Number of editors: ' +
+            console.log('[ ★ ] Breaking news candidate: "' + article + '". ' +
+                articles[article].occurrences + ' ' +
+                'times seen. ' +
+                'Edit intervals: ' + articles[article].intervals.toString()
+                .replace(/(\d+),?/g, '$1ms ').trim() + '. ' +
+                'Number of editors: ' +
                 articles[article].editors.length + '.');
           }
         }
@@ -214,14 +227,29 @@ client.addListener('message', function(from, to, message) {
         now = new Date().getTime();
         if (now - articles[key].timestamp > SECONDS_SINCE_LAST_EDIT * 1000) {
           delete articles[key];
-          if (VERBOUS) {
-            console.log('[ † ] no more mentions: "' + key + '".' +
-                ' Articles left: ' + Object.keys(articles).length);
+          for (version in articleClusters[key]) {
+            delete articleVersionsMap[key];
+          }
+          delete articleClusters[key];
+          delete articleVersionsMap[key];
+          if (VERBOUS && REALLY_VERBOUS) {
+            console.log('[ † ] No more mentions: "' + key + '". ' +
+                'Articles left: ' + Object.keys(articles).length + '. ' +
+                'Clusters left: ' + Object.keys(articleClusters).length + '. ' +
+                'Mappings left: ' + Object.keys(articleVersionsMap).length);
           }
         }
       }
     }
   }
+  /*
+  console.log('#### Articles #####');
+  console.log(articles);
+  console.log('****** Clusters ******');
+  console.log(articleClusters);
+  console.log('%%%%%%% Versions %%%%%%%');
+  console.log(articleVersionsMap);
+  */
 });
 
 // callback function for getting language references from the Wikipedia API
@@ -255,12 +283,8 @@ function getLanguageReferences(error, response, body, article) {
           });
         }
       }
-      console.log('*** Clusters ***');
-      console.log(articleClusters);
-      console.log('### Articles ####');
-      console.log(articles);
-      console.log('%%% Mapping %%%%%%');
-      console.log(articleVersionsMap);
     }
+  } else {
+    console.log('ERROR (Wikipedia API): ' + response.statusCode + ': ' + body);
   }
 }

@@ -5,11 +5,11 @@ var express = require('express');
 // verbous debug mode
 var VERBOUS = true;
 // really very verbous debug mode
-var REALLY_VERBOUS = false;
+var REALLY_VERBOUS = true;
 
 // whether to only monitor the 1,000,000+ articles Wikipedias,
 // or also the 100,000+ articles Wikipedias.
-var MONITOR_LONG_TAIL_WIKIPEDIAS = false;
+var MONITOR_LONG_TAIL_WIKIPEDIAS = true;
 
 // required for Wikipedia API
 var USER_AGENT = 'Wikipedia Live Monitor * IRC nick: wikipedia-live-monitor * Contact: tomac(a)google.com.';
@@ -167,13 +167,17 @@ client.addListener('message', function(from, to, message) {
         }
       // existing article  
       } else {
-        var oldArticle = article;
-        article = articleVersionsMap[article];
         if (VERBOUS) {
-          console.log('[ ⚭ ] Merging ' + oldArticle + ' with ' + article);
+          console.log('[ ⚭ ] Merging ' + article + ' with ' +
+              articleVersionsMap[article]);
         }
+        article = articleVersionsMap[article];
         // update statistics of the article
-        articles[article].occurrences += 1;
+        try {
+          articles[article].occurrences += 1;
+        } catch(e) {
+          console.log('Failed at ' + article); // ficken
+        }
         now = new Date().getTime();
         articles[article].intervals.push(now - articles[article].timestamp);
         articles[article].timestamp = now;
@@ -188,10 +192,10 @@ client.addListener('message', function(from, to, message) {
         if (VERBOUS) {
           console.log('[ ! ] ' + articles[article].occurrences + ' ' +
               'times seen: "' + article + '". ' +
+              'Timestamp: ' + new Date(articles[article].timestamp) + '. ' +
               'Edit intervals: ' + articles[article].intervals.toString()
               .replace(/(\d+),?/g, '$1ms ').trim() + '. ' +
               'Number of editors: ' + articles[article].editors.length + '. ' +
-              'Timestamp: ' + new Date(articles[article].timestamp) + '. ' +
               'Editors: ' + articles[article].editors + '. ' +
               'Languages: ' + JSON.stringify(articles[article].languages));
         }
@@ -215,10 +219,13 @@ client.addListener('message', function(from, to, message) {
             console.log('[ ★ ] Breaking news candidate: "' + article + '". ' +
                 articles[article].occurrences + ' ' +
                 'times seen. ' +
+                'Timestamp: ' + new Date(articles[article].timestamp) + '. ' +
                 'Edit intervals: ' + articles[article].intervals.toString()
                 .replace(/(\d+),?/g, '$1ms ').trim() + '. ' +
                 'Number of editors: ' +
-                articles[article].editors.length + '.');
+                articles[article].editors.length + '. ' +
+                'Editors: ' + articles[article].editors + '. ' +
+                'Languages: ' + JSON.stringify(articles[article].languages));
           }
         }
       }

@@ -26,13 +26,17 @@ var SECONDS_SINCE_LAST_EDIT = 240;
 // in order to be regarded a breaking news candidate
 var SECONDS_BETWEEN_EDITS = 60;
 
-// Wikipedia edit bots can account for many false positives, so usually we want
-// to discard them
-var DISCARD_WIKIPEDIA_BOTS = true;
-
 // an article must have at least BREAKING_NEWS_THRESHOLD edits before it is
 // considered a breaking news candidate
 var BREAKING_NEWS_THRESHOLD = 5;
+
+// an article must be edited by at least NUMBER_OF_CONCURRENT_EDITORS concurrent
+// editors before it is considered a breaking news candidate
+var NUMBER_OF_CONCURRENT_EDITORS = 2; 
+
+// Wikipedia edit bots can account for many false positives, so usually we want
+// to discard them
+var DISCARD_WIKIPEDIA_BOTS = true;
 
 // IRC details for the recent changes live updates
 var IRC_SERVER = 'irc.wikimedia.org';
@@ -246,7 +250,7 @@ function monitorWikipedia(socket) {
             // check if at least two editors made edits at roughly the same time
             var numberOfEditors = articles[article].editors.length;
             if ((allEditsInShortDistances) &&
-                (numberOfEditors >= 2)) {
+                (numberOfEditors >= NUMBER_OF_CONCURRENT_EDITORS)) {
               var red = '\u001b[31m';
               var reset = '\u001b[0m';
               socket.emit('breakingNewsCandidate', {
@@ -291,7 +295,6 @@ function monitorWikipedia(socket) {
             if (VERBOUS && REALLY_VERBOUS) {
               console.log('[ † ] No more mentions: "' + key + '". ' +
                   'Articles left: ' + Object.keys(articles).length + '. ' +
-                  'Clusters left: ' + Object.keys(articleClusters).length + '. ' +
                   'Mappings left: ' + Object.keys(articleVersionsMap).length);
             }
           }
@@ -352,6 +355,37 @@ app.get('/', function(req, res) {
 
 io.set('log level', 1);
 io.sockets.on('connection', function(socket) {
+  socket.emit('defaultSettings', {
+    secondsSinceLastEdit: SECONDS_SINCE_LAST_EDIT,
+    secondsBetweenEdits: SECONDS_BETWEEN_EDITS,
+    breakingNewsThreshold: BREAKING_NEWS_THRESHOLD,
+    numberOfConcurrentEditors: NUMBER_OF_CONCURRENT_EDITORS
+  });
+
   monitorWikipedia(socket);
+
+  socket.on('secondsSinceLastEdit', function(data) {
+    SECONDS_SINCE_LAST_EDIT = data.value;
+    console.log('Setting SECONDS_SINCE_LAST_EDIT to: ' +
+        SECONDS_SINCE_LAST_EDIT);
+  });
+
+  socket.on('secondsBetweenEdits', function(data) {
+    SECONDS_BETWEEN_EDITS = data.value;
+    console.log('Setting SECONDS_BETWEEN_EDITS to: ' + SECONDS_BETWEEN_EDITS);
+  });
+
+  socket.on('breakingNewsThreshold', function(data) {
+    BREAKING_NEWS_THRESHOLD = data.value;
+    console.log('Setting BREAKING_NEWS_THRESHOLD to: ' +
+        BREAKING_NEWS_THRESHOLD);
+  });
+
+  socket.on('numberOfConcurrentEditors', function(data) {
+    NUMBER_OF_CONCURRENT_EDITORS = data.value;
+    console.log('Setting NUMBER_OF_CONCURRENT_EDITORS to: ' +
+        NUMBER_OF_CONCURRENT_EDITORS);
+  });
+
 });
 server.listen(8080);

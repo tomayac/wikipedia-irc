@@ -5,6 +5,43 @@
   </head>
   <body>
     <h1>Wikipedia Live Monitor</h1>
+    <h2>Settings</h2>
+    <div>
+      <input id="breakingNewsThreshold" type="range" min="1" max="10" step="1" />
+      <span id="breakingNewsThresholdValue"></span>
+      <label for="breakingNewsThreshold">Breaking News Threshold</label>
+      <small>An article must have at least <i>n</i> edits before it is
+      considered a breaking news candidate.</small>
+    </div>
+
+    <div>
+      <input id="secondsBetweenEdits" type="range" min="10" max="120" step="10" />
+      <span id="secondsBetweenEditsValue"></span>
+      <label for="secondsBetweenEdits">Seconds Between Edits</label>
+      <small>An article must have at max <i>n</i> seconds in between edits
+      in order to be regarded a breaking news candidate.</small>
+    </div>
+
+    <div>
+      <input id="secondsSinceLastEdit" type="range" min="10" max="480" step="10" />
+      <span id="secondsSinceLastEditValue"></span>
+      <label for="secondsSinceLastEdit">Seconds Since Last Edit</label>
+      <small>An article is thrown out of the monitoring loop if its last edit is
+      longer ago than <i>n</i> seconds.</small>
+    </div>
+
+    <div>
+      <input id="numberOfConcurrentEditors" type="range" min="1" max="5" step="1" />
+      <span id="numberOfConcurrentEditorsValue"></span>
+      <label for="numberOfConcurrentEditors">Number of Concurrent Editors</label>
+      <small>An article must be edited by at least <i>n</i> concurrent
+      editors before it is considered a breaking news candidate.</small>
+    </div>
+
+    <div>
+      <button id="reset">Reset</button>
+    </div>
+
     <h2>Edited right now:</h2>
     <div id="firstTimeSeen"></div>
 
@@ -21,6 +58,90 @@
     <div id="stats"></div>
 
     <script>
+      var reset = document.querySelector('#reset');
+      reset.addEventListener('click', function(e) {
+        document.querySelector('#secondsSinceLastEdit')
+        .value = 240;
+        document.querySelector('#secondsSinceLastEditValue')
+        .innerHTML = 240;
+
+        document.querySelector('#secondsBetweenEdits')
+        .value = 60;
+        document.querySelector('#secondsBetweenEditsValue')
+        .innerHTML = 60;
+
+        document.querySelector('#breakingNewsThreshold')
+        .value = 5;
+        document.querySelector('#breakingNewsThresholdValue')
+        .innerHTML = 5;
+
+        document.querySelector('#numberOfConcurrentEditors')
+        .value = 2;
+        document.querySelector('#numberOfConcurrentEditorsValue')
+        .innerHTML = 2;
+
+        socket.emit('secondsSinceLastEdit', {
+          value: secondsSinceLastEdit.value
+        });
+
+        socket.emit('breakingNewsThreshold', {
+          value: breakingNewsThreshold.value
+        });
+
+        socket.emit('numberOfConcurrentEditors', {
+          value: numberOfConcurrentEditors.value
+        });
+
+        socket.emit('secondsBetweenEdits', {
+          value: secondsBetweenEdits.value
+        });
+      }, false);
+
+      var secondsSinceLastEdit =
+          document.querySelector('#secondsSinceLastEdit');
+      var secondsSinceLastEditValue =
+          document.querySelector('#secondsSinceLastEditValue');
+      secondsSinceLastEdit.addEventListener('change', function(e) {
+        secondsSinceLastEditValue.innerHTML = secondsSinceLastEdit.value;
+        socket.emit('secondsSinceLastEdit', {
+          value: secondsSinceLastEdit.value
+        });
+      }, false);
+
+      var secondsBetweenEdits =
+          document.querySelector('#secondsBetweenEdits');
+      var secondsBetweenEditsValue =
+          document.querySelector('#secondsBetweenEditsValue');
+      secondsBetweenEdits.addEventListener('change', function(e) {
+        secondsBetweenEditsValue.innerHTML = secondsBetweenEdits.value;
+        socket.emit('secondsBetweenEdits', {
+          value: secondsBetweenEdits.value
+        });
+      }, false);
+
+      var numberOfConcurrentEditors =
+          document.querySelector('#numberOfConcurrentEditors');
+      var numberOfConcurrentEditorsValue =
+          document.querySelector('#numberOfConcurrentEditorsValue');
+      numberOfConcurrentEditors.addEventListener('change', function(e) {
+        numberOfConcurrentEditorsValue.innerHTML =
+            numberOfConcurrentEditors.value;
+        socket.emit('numberOfConcurrentEditors', {
+          value: numberOfConcurrentEditors.value
+        });
+      }, false);
+
+      var breakingNewsThreshold =
+          document.querySelector('#breakingNewsThreshold');
+      var breakingNewsThresholdValue =
+          document.querySelector('#breakingNewsThresholdValue');
+      breakingNewsThreshold.addEventListener('change', function(e) {
+        breakingNewsThresholdValue.innerHTML = breakingNewsThreshold.value;
+        socket.emit('breakingNewsThreshold', {
+          value: breakingNewsThreshold.value
+        });
+      }, false);
+
       function logFirstTimeSeen(data) {
         var firstTimeSeen = document.querySelector('#firstTimeSeen');
         if (firstTimeSeen.childNodes.length > 4) {
@@ -83,12 +204,39 @@
       function logStats(data) {
         var stats = document.querySelector('#stats');
         stats.innerHTML =
-            '<li><strong>Articles left:</strong> ' + data.articlesLeft + '</li>' +
-            '<li><strong>Clusters left:</strong> ' + data.clustersLeft + '</li>' +
-            '<li><strong>Mappings left:</strong> ' + data.mappingsLeft + '</li>';
+            '<li><strong>Articles left:</strong> ' +
+                data.articlesLeft + '</li>' +
+            '<li><strong>Clusters left:</strong> ' +
+                data.clustersLeft + '</li>' +
+            '<li><strong>Mappings left:</strong> ' +
+                data.mappingsLeft + '</li>';
       }
 
       var socket = io.connect('http://localhost:8080');
+
+      socket.on('defaultSettings', function(data) {
+        document.querySelector('#secondsSinceLastEdit')
+        .value = data.secondsSinceLastEdit;
+        document.querySelector('#secondsSinceLastEditValue')
+        .innerHTML = data.secondsSinceLastEdit;
+
+        document.querySelector('#secondsBetweenEdits')
+        .value = data.secondsBetweenEdits;
+        document.querySelector('#secondsBetweenEditsValue')
+        .innerHTML = data.secondsBetweenEdits;
+
+        document.querySelector('#breakingNewsThreshold')
+        .value = data.breakingNewsThreshold;
+        document.querySelector('#breakingNewsThresholdValue')
+        .innerHTML = data.breakingNewsThreshold;
+
+        document.querySelector('#numberOfConcurrentEditors')
+        .value = data.numberOfConcurrentEditors;
+        document.querySelector('#numberOfConcurrentEditorsValue')
+        .innerHTML = data.numberOfConcurrentEditors;
+
+      });
+
       socket.on('firstTimeSeen', function(data) {
         logFirstTimeSeen(data);
       });

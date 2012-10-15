@@ -17,6 +17,9 @@
     <h2>Breaking news candidates right now:</h2>
     <div id="breakingNewsCandidates"></div>
 
+    <h2>Statistics:</h2>
+    <div id="stats"></div>
+
     <script>
       function logFirstTimeSeen(data) {
         var firstTimeSeen = document.querySelector('#firstTimeSeen');
@@ -77,6 +80,14 @@
             '</li>';
       }
 
+      function logStats(data) {
+        var stats = document.querySelector('#stats');
+        stats.innerHTML =
+            '<li><strong>Articles left:</strong> ' + data.articlesLeft + '</li>' +
+            '<li><strong>Clusters left:</strong> ' + data.clustersLeft + '</li>' +
+            '<li><strong>Mappings left:</strong> ' + data.mappingsLeft + '</li>';
+      }
+
       var socket = io.connect('http://localhost:8080');
       socket.on('firstTimeSeen', function(data) {
         logFirstTimeSeen(data);
@@ -92,6 +103,10 @@
 
       socket.on('breakingNewsCandidate', function(data) {
         logBreakingNewsCandidate(data);
+      });
+
+      socket.on('stats', function(data) {
+        logStats(data);
       });
 
     </script>

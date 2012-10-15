@@ -7,13 +7,13 @@ var server = http.createServer(app);
 var io = require('socket.io').listen(server);
 
 // verbous debug mode
-var VERBOUS = true;
+var VERBOUS = false;
 // really very verbous debug mode
 var REALLY_VERBOUS = false;
 
 // whether to only monitor the 1,000,000+ articles Wikipedias,
 // or also the 100,000+ articles Wikipedias.
-var MONITOR_LONG_TAIL_WIKIPEDIAS = false;
+var MONITOR_LONG_TAIL_WIKIPEDIAS = true;
 
 // required for Wikipedia API
 var USER_AGENT = 'Wikipedia Live Monitor * IRC nick: wikipedia-live-monitor * Contact: tomac(a)google.com.';
@@ -283,6 +283,11 @@ function monitorWikipedia(socket) {
             }
             delete articleClusters[key];
             delete articleVersionsMap[key];
+            socket.emit('stats', {
+              articlesLeft: Object.keys(articles).length,
+              clustersLeft: Object.keys(articleClusters).length,
+              mappingsLeft: Object.keys(articleVersionsMap).length
+            });
             if (VERBOUS && REALLY_VERBOUS) {
               console.log('[ † ] No more mentions: "' + key + '". ' +
                   'Articles left: ' + Object.keys(articles).length + '. ' +

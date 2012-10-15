@@ -1,0 +1,98 @@
+<html>
+  <head>
+    <title>Wikipedia Live Monitor</title>
+    <script src="http://localhost:8080/socket.io/socket.io.js"></script>
+  </head>
+  <body>
+    <h1>Wikipedia Live Monitor</h1>
+    <h2>Edited right now:</h2>
+    <div id="firstTimeSeen"></div>
+
+    <h2>Merging right now:</h2>
+    <div id="merging"></div>
+    
+    <h2>Concurrently edited in short intervals:</h2>
+    <div id="nTimesSeen"></div>
+    
+    <h2>Breaking news candidates right now:</h2>
+    <div id="breakingNewsCandidates"></div>
+    
+    <script>
+      function logFirstTimeSeen(data) {
+        var firstTimeSeen = document.querySelector('#firstTimeSeen');
+        if (firstTimeSeen.childNodes.length > 4) {
+          firstTimeSeen.removeChild(firstTimeSeen.firstChild);
+        }
+        firstTimeSeen.innerHTML += 
+            '<li>' +
+              '<strong>' + data.article + '</strong> ' +
+              '(' + data.timestamp + '). ' +
+              'Editors: ' + data.editor + '. ' +
+              'Languages: ' + JSON.stringify(data.languages) + '.' +
+            '</li>';
+      }
+      
+      function logMerging(data) {
+        var merging = document.querySelector('#merging');
+        if (merging.childNodes.length > 4) {
+          merging.removeChild(merging.firstChild);
+        }
+        merging.innerHTML +=
+            '<li>' + 
+              '<strong>' + data.current + '</strong> with ' +
+              '<strong>' + data.existing + '</strong>.' +
+            '</li>';
+      }
+      
+      function logNTimesSeen(data) {
+        var nTimesSeen = document.querySelector('#nTimesSeen');
+        if (nTimesSeen.childNodes.length > 4) {
+          nTimesSeen.removeChild(nTimesSeen.firstChild);
+        }
+        nTimesSeen.innerHTML +=
+            '<li>' +
+              '<strong>' + data.article + '</strong> ' +
+              '(' + data.timestamp + '), ' +
+              'Edit Intervals: ' + data.editIntervals + '. ' +
+              'Occurrences: ' + data.occurrences + '. ' +
+              'Editors: ' + data.editors + '. ' +
+              'Languages: ' + JSON.stringify(data.languages) + '.' +            
+            '</li>';
+      }
+
+      function breakingNewsCandidate(data) {
+        var breakingNewsCandidate = document.querySelector('#breakingNewsCandidate');
+        if (breakingNewsCandidate.childNodes.length > 4) {
+          breakingNewsCandidate.removeChild(breakingNewsCandidate.firstChild);
+        }
+        breakingNewsCandidate.innerHTML +=
+            '<li>' +
+              '<strong>' + data.article + '</strong> ' +
+              '(' + data.timestamp + '), ' +
+              'Edit Intervals: ' + data.editIntervals + '. ' +
+              'Occurrences: ' + data.occurrences + '. ' +
+              'Editors: ' + data.editors + '. ' +
+              'Languages: ' + JSON.stringify(data.languages) + '.' +            
+            '</li>';
+      }
+      
+      var socket = io.connect('http://localhost:8080');
+      socket.on('firstTimeSeen', function(data) {
+        logFirstTimeSeen(data);
+      });
+      
+      socket.on('merging', function(data) {
+        logMerging(data);
+      });
+      
+      socket.on('nTimesSeen', function(data) {
+        logNTimesSeen(data);
+      });
+
+      socket.on('breakingNewsCandidate', function(data) {
+        logBreakingNewsCandidate(data);
+      });
+      
+    </script>
+  </body>
+</html>

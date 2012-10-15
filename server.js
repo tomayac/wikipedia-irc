@@ -288,13 +288,13 @@ function monitorWikipedia(socket) {
             delete articleClusters[key];
             delete articleVersionsMap[key];
             socket.emit('stats', {
-              articlesLeft: Object.keys(articles).length,
               clustersLeft: Object.keys(articleClusters).length,
               mappingsLeft: Object.keys(articleVersionsMap).length
             });
             if (VERBOUS && REALLY_VERBOUS) {
               console.log('[ † ] No more mentions: "' + key + '". ' +
-                  'Articles left: ' + Object.keys(articles).length + '. ' +
+                  'Article clusters left: ' +
+                      Object.keys(articleClusters).length + '. ' +
                   'Mappings left: ' + Object.keys(articleVersionsMap).length);
             }
           }

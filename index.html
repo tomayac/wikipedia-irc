@@ -10,20 +10,20 @@
 
     <h2>Merging right now:</h2>
     <div id="merging"></div>
-    
+
     <h2>Concurrently edited in short intervals:</h2>
     <div id="nTimesSeen"></div>
-    
+
     <h2>Breaking news candidates right now:</h2>
     <div id="breakingNewsCandidates"></div>
-    
+
     <script>
       function logFirstTimeSeen(data) {
         var firstTimeSeen = document.querySelector('#firstTimeSeen');
         if (firstTimeSeen.childNodes.length > 4) {
           firstTimeSeen.removeChild(firstTimeSeen.firstChild);
         }
-        firstTimeSeen.innerHTML += 
+        firstTimeSeen.innerHTML +=
             '<li>' +
               '<strong>' + data.article + '</strong> ' +
               '(' + data.timestamp + '). ' +
@@ -31,19 +31,19 @@
               'Languages: ' + JSON.stringify(data.languages) + '.' +
             '</li>';
       }
-      
+
       function logMerging(data) {
         var merging = document.querySelector('#merging');
         if (merging.childNodes.length > 4) {
           merging.removeChild(merging.firstChild);
         }
         merging.innerHTML +=
-            '<li>' + 
+            '<li>' +
               '<strong>' + data.current + '</strong> with ' +
               '<strong>' + data.existing + '</strong>.' +
             '</li>';
       }
-      
+
       function logNTimesSeen(data) {
         var nTimesSeen = document.querySelector('#nTimesSeen');
         if (nTimesSeen.childNodes.length > 4) {
@@ -56,12 +56,13 @@
               'Edit Intervals: ' + data.editIntervals + '. ' +
               'Occurrences: ' + data.occurrences + '. ' +
               'Editors: ' + data.editors + '. ' +
-              'Languages: ' + JSON.stringify(data.languages) + '.' +            
+              'Languages: ' + JSON.stringify(data.languages) + '.' +
             '</li>';
       }
 
-      function breakingNewsCandidate(data) {
-        var breakingNewsCandidate = document.querySelector('#breakingNewsCandidate');
+      function logBreakingNewsCandidate(data) {
+        var breakingNewsCandidate =
+            document.querySelector('#breakingNewsCandidates');
         if (breakingNewsCandidate.childNodes.length > 4) {
           breakingNewsCandidate.removeChild(breakingNewsCandidate.firstChild);
         }
@@ -72,19 +73,19 @@
               'Edit Intervals: ' + data.editIntervals + '. ' +
               'Occurrences: ' + data.occurrences + '. ' +
               'Editors: ' + data.editors + '. ' +
-              'Languages: ' + JSON.stringify(data.languages) + '.' +            
+              'Languages: ' + JSON.stringify(data.languages) + '.' +
             '</li>';
       }
-      
+
       var socket = io.connect('http://localhost:8080');
       socket.on('firstTimeSeen', function(data) {
         logFirstTimeSeen(data);
       });
-      
+
       socket.on('merging', function(data) {
         logMerging(data);
       });
-      
+
       socket.on('nTimesSeen', function(data) {
         logNTimesSeen(data);
       });
@@ -92,7 +93,7 @@
       socket.on('breakingNewsCandidate', function(data) {
         logBreakingNewsCandidate(data);
       });
-      
+
     </script>
   </body>
 </html>

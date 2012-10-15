@@ -9,7 +9,7 @@ var io = require('socket.io').listen(server);
 // verbous debug mode
 var VERBOUS = true;
 // really very verbous debug mode
-var REALLY_VERBOUS = true;
+var REALLY_VERBOUS = false;
 
 // whether to only monitor the 1,000,000+ articles Wikipedias,
 // or also the 100,000+ articles Wikipedias.
@@ -18,7 +18,7 @@ var MONITOR_LONG_TAIL_WIKIPEDIAS = false;
 // required for Wikipedia API
 var USER_AGENT = 'Wikipedia Live Monitor * IRC nick: wikipedia-live-monitor * Contact: tomac(a)google.com.';
 
-// an article is thrown out of the monitoring loop if its last edit is longer 
+// an article is thrown out of the monitoring loop if its last edit is longer
 // ago than SECONDS_SINCE_LAST_EDIT seconds
 var SECONDS_SINCE_LAST_EDIT = 240;
 
@@ -28,7 +28,7 @@ var SECONDS_BETWEEN_EDITS = 60;
 
 // Wikipedia edit bots can account for many false positives, so usually we want
 // to discard them
-var DISCARD_WIKIPEDIA_BOTS = false;
+var DISCARD_WIKIPEDIA_BOTS = true;
 
 // an article must have at least BREAKING_NEWS_THRESHOLD edits before it is
 // considered a breaking news candidate
@@ -90,7 +90,7 @@ var oneHundredThousandPlusLanguages = {
   hi: true,
   et: true
 };
-    
+
 var IRC_CHANNELS = [];
 var PROJECT = '.wikipedia';
 Object.keys(millionPlusLanguages).forEach(function(language) {
@@ -135,7 +135,7 @@ function monitorWikipedia(socket) {
           .replace(/\s*$/, '');
       // discard edits made by bots.
       // bots must identify themselves by prefixing or suffixing their username
-      // with "bot". 
+      // with "bot".
       // http://en.wikipedia.org/wiki/Wikipedia:Bot_policy#Bot_accounts
       if (DISCARD_WIKIPEDIA_BOTS) {
         if (/^bot/i.test(editor) || /bot$/i.test(editor)) {
@@ -182,13 +182,13 @@ function monitorWikipedia(socket) {
             editor: editor,
             languages: articles[article].languages
           });
-          if (VERBOUS && REALLY_VERBOUS) {          
+          if (VERBOUS && REALLY_VERBOUS) {
             console.log('[ * ] First time seen: "' + article + '". ' +
                 'Timestamp: ' + new Date(articles[article].timestamp) + '. ' +
                 'Editor: ' + editor + '. ' +
                 'Languages: ' + JSON.stringify(articles[article].languages));
           }
-        // existing article  
+        // existing article
         } else {
           socket.emit('merging', {
             current: article,
@@ -218,7 +218,7 @@ function monitorWikipedia(socket) {
             timestamp: new Date(articles[article].timestamp),
             editIntervals: articles[article].intervals,
             editors: articles[article].editors,
-            languages: articles[article].languages            
+            languages: articles[article].languages
           });
           if (VERBOUS) {
             console.log('[ ! ] ' + articles[article].occurrences + ' ' +
@@ -255,7 +255,7 @@ function monitorWikipedia(socket) {
                 timestamp: new Date(articles[article].timestamp),
                 editIntervals: articles[article].intervals,
                 editors: articles[article].editors,
-                languages: articles[article].languages            
+                languages: articles[article].languages
               });
 
               console.log(red + '[ ★ ] Breaking news candidate: "' +
@@ -323,7 +323,7 @@ function getLanguageReferences(error, response, body, article) {
         }
         if (page.langlinks) {
           page.langlinks.forEach(function(langLink) {
-            var lang = langLink.lang;                  
+            var lang = langLink.lang;
             if ((millionPlusLanguages[lang]) ||
                 ((MONITOR_LONG_TAIL_WIKIPEDIAS) &&
                     (oneHundredThousandPlusLanguages[lang]))) {

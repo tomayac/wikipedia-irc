@@ -172,17 +172,30 @@ function monitorWikipedia(socket) {
         request.get(options, function(error, response, body) {
           getLanguageReferences(error, response, body, article);
         });
+
+        // get diff URL
+        var diffUrl = messageComponents[0]
+            .replace(/.*?\u000302(.*?)\u0003.+$/, '$1');
+        var toRev = diffUrl.replace(/.*&diff=(\d+).*/, '$1');
+        var fromRev = diffUrl.replace(/.*&oldid=(\d+)&?.*?/, '$1');
+        diffUrl = 'http://' + language +
+            '.wikipedia.org/w/api.php?action=compare&torev=' + toRev +
+            '&fromrev=' + fromRev + '&format=json';
+
         // new article
         if (!articleVersionsMap[article]) {
+          var now = new Date().getTime();
           articles[article] = {
-            timestamp: new Date().getTime(),
+            timestamp: now,
             occurrences: 1,
             intervals: [],
             editors: [editor],
             languages: {},
-            versions: {}
+            versions: {},
+            changes: {}
           };
           articles[article].languages[language] = 1;
+          articles[article].changes[now] = diffUrl;
           socket.emit('firstTimeSeen', {
             article: article,
             timestamp: new Date(articles[article].timestamp),
@@ -211,9 +224,10 @@ function monitorWikipedia(socket) {
           // update statistics of the article
           articles[article].occurrences += 1;
           articles[article].versions[currentArticle] = true;
-          now = new Date().getTime();
+          var now = new Date().getTime();
           articles[article].intervals.push(now - articles[article].timestamp);
           articles[article].timestamp = now;
+          articles[article].changes[now] = diffUrl;
           if (articles[article].editors.indexOf(editor) === -1) {
             articles[article].editors.push(editor);
           }
@@ -229,7 +243,8 @@ function monitorWikipedia(socket) {
             editIntervals: articles[article].intervals,
             editors: articles[article].editors,
             languages: articles[article].languages,
-            versions: articles[article].versions
+            versions: articles[article].versions,
+            changes: articles[article].changes
           });
           if (VERBOUS) {
             console.log('[ ! ] ' + articles[article].occurrences + ' ' +
@@ -265,7 +280,8 @@ function monitorWikipedia(socket) {
                 editIntervals: articles[article].intervals,
                 editors: articles[article].editors,
                 languages: articles[article].languages,
-                versions: articles[article].versions
+                versions: articles[article].versions,
+                changes: articles[article].changes
               });
               var red = '\u001b[31m';
               var reset = '\u001b[0m';
@@ -345,7 +361,7 @@ io.sockets.on('connection', function(socket) {
   // clean-up function, called regularly like a garbage collector
   function cleanUpMonitoringLoop() {
     for (var key in articles) {
-      now = new Date().getTime();
+      var now = new Date().getTime();
       if (now - articles[key].timestamp > SECONDS_SINCE_LAST_EDIT * 1000) {
         delete articles[key];
         for (version in articleClusters[key]) {

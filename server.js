@@ -127,21 +127,7 @@ function monitorWikipedia(socket) {
       // get the editor's username or IP address
       // the IRC log format is as follows (with color codes removed):
       // rc-pmtpa: [[Juniata River]] http://en.wikipedia.org/w/index.php?diff=516269072&oldid=514659029 * Johanna-Hypatia * (+67) Category:Place names of Native American origin in Pennsylvania
-      var editor = message.split('*')[1]
-          .replace(/\x0303/g, '')
-          .replace(/\x035/g, '')
-          .replace(/\u0003/g, '')
-          .replace(/^\s*/, '')
-          .replace(/\s*$/, '');
-      // discard edits made by bots.
-      // bots must identify themselves by prefixing or suffixing their username
-      // with "bot".
-      // http://en.wikipedia.org/wiki/Wikipedia:Bot_policy#Bot_accounts
-      if (DISCARD_WIKIPEDIA_BOTS) {
-        if (/^bot/i.test(editor) || /bot$/i.test(editor)) {
-          return;
-        }
-      }
+      var messageComponents = message.split('*');
       // remove color codes
       var regex = /\x0314\[\[\x0307(.+?)\x0314\]\]\x034.+?$/;
       var article = message.replace(regex, '$1');
@@ -149,6 +135,23 @@ function monitorWikipedia(socket) {
       // http://www.mediawiki.org/wiki/Help:Namespaces
       // this means only listening to messages without a ':' essentially
       if (article.indexOf(':') === -1) {
+        var editor = messageComponents[1]
+            .replace(/\x0303/g, '')
+            .replace(/\x035/g, '')
+            .replace(/\u0003/g, '')
+            .replace(/^\s*/, '')
+            .replace(/\s*$/, '');
+        // discard edits made by bots.
+        // bots are identified by a B flag, as documented here
+        // http://www.mediawiki.org/wiki/Help:Tracking_changes
+        // (the 'b' is actually uppercase in IRC)
+        var flags = messageComponents[0]
+            .replace(/.*?\x034\s(.*?)\x0310.+$/, '$1');
+        if (DISCARD_WIKIPEDIA_BOTS) {
+          if (/B/.test(flags)) {
+            return;
+          }
+        }
         // normalize article titles to follow the Wikipedia URLs
         article = article.replace(/\s/g, '_');
         var now;

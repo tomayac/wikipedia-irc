@@ -211,16 +211,18 @@ function monitorWikipedia(socket) {
           }
         // existing article
         } else {
-          var currentArticle = article;
-          socket.emit('merging', {
-            current: article,
-            existing: articleVersionsMap[article]
-          });
-          if (VERBOUS) {
-            console.log('[ ⚭ ] Merging ' + article + ' with ' +
-                articleVersionsMap[article]);
+          if (article !== articleVersionsMap[article]) {
+            var currentArticle = article;
+            socket.emit('merging', {
+              current: article,
+              existing: articleVersionsMap[article]
+            });
+            if (VERBOUS) {
+              console.log('[ ⚭ ] Merging ' + article + ' with ' +
+                  articleVersionsMap[article]);
+            }
+            article = articleVersionsMap[article];
           }
-          article = articleVersionsMap[article];
           // update statistics of the article
           articles[article].occurrences += 1;
           articles[article].versions[currentArticle] = true;
@@ -350,6 +352,7 @@ function getLanguageReferences(error, response, body, article) {
   }
 }
 
+app.use(express.static(__dirname + '/static'));
 app.get('/', function(req, res) {
   res.sendfile(__dirname + '/index.html');
 });

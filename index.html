@@ -2,6 +2,7 @@
   <head>
     <title>Wikipedia Live Monitor</title>
     <script src="http://localhost:8080/socket.io/socket.io.js"></script>
+    <script src="humane.js"></script>
   </head>
   <body>
     <h1>Wikipedia Live Monitor</h1>
@@ -142,6 +143,32 @@
         });
       }, false);
 
+      // converts an article like en:Albert_Einstein to a valid Wikipedia link
+      // like so: http://en.wikipedia.org/wiki/Albert_Einstein
+      function linkify(text) {
+        var components = text.split(':');
+        return '<a href="http://' + components[0] + '.wikipedia.org/wiki/' +
+            components[1] + '">' + text + '</a>';
+      }
+
+      function formatLanguages(languages) {
+        var languagesArray = [];
+        for(var language in languages) {
+          var obj = {
+            language: language,
+            count: languages[language]
+          };
+          languagesArray.push(obj);
+        }
+        languagesArray.sort(function(a, b) { return b.count - a.count; });
+        var html = '';
+        languagesArray.forEach(function(lang, i) {
+          html += (i > 0? ', ' : '') + '<b>' + lang.language + '</b>: ' +
+              lang.count;
+        });
+        return html;
+      }
+
       function logFirstTimeSeen(data) {
         var firstTimeSeen = document.querySelector('#firstTimeSeen');
         if (firstTimeSeen.childNodes.length > 4) {
@@ -149,10 +176,10 @@
         }
         firstTimeSeen.innerHTML +=
             '<li>' +
-              '<strong>' + data.article + '</strong> ' +
-              '(' + data.timestamp + '). ' +
+              '<strong>' + linkify(data.article) + '</strong> ' +
+              '(' + humaneDate(data.timestamp) + '). ' +
               'Editors: ' + data.editor + '. ' +
-              'Languages: ' + JSON.stringify(data.languages) + '.' +
+              'Languages: ' + formatLanguages(data.languages) + '.' +
             '</li>';
       }
 
@@ -163,8 +190,8 @@
         }
         merging.innerHTML +=
             '<li>' +
-              '<strong>' + data.current + '</strong> with ' +
-              '<strong>' + data.existing + '</strong>.' +
+              '<strong>' + linkify(data.current) + '</strong> with ' +
+              '<strong>' + linkify(data.existing) + '</strong>.' +
             '</li>';
       }
 
@@ -175,13 +202,13 @@
         }
         nTimesSeen.innerHTML +=
             '<li>' +
-              '<strong>' + data.article + '</strong> ' +
-              '(' + data.timestamp + '), ' +
+              '<strong>' + linkify(data.article) + '</strong> ' +
+              '(' + humaneDate(data.timestamp) + '), ' +
               'Edit Intervals: ' + data.editIntervals + '. ' +
               'Occurrences: ' + data.occurrences + '. ' +
               'Editors: ' + data.editors + '. ' +
-              'Languages: ' + JSON.stringify(data.languages) + '. ' +
-              'Versions: ' + Object.keys(data.versions) + '. ' +
+              'Languages: ' + formatLanguages(data.languages) + '. ' +
+              'Versions: ' + Object.keys(data.versions).map(linkify) + '. ' +
               'Changes: ' + JSON.stringify(data.changes) + '.'
             '</li>';
       }
@@ -194,12 +221,12 @@
         }
         breakingNewsCandidate.innerHTML +=
             '<li>' +
-              '<strong>' + data.article + '</strong> ' +
-              '(' + data.timestamp + '), ' +
+              '<strong>' + linkify(data.article) + '</strong> ' +
+              '(' + humaneDate(data.timestamp) + '), ' +
               'Edit Intervals: ' + data.editIntervals + '. ' +
               'Occurrences: ' + data.occurrences + '. ' +
               'Editors: ' + data.editors + '. ' +
-              'Languages: ' + JSON.stringify(data.languages) + '. ' +
+              'Languages: ' + formatLanguages(data.languages) + '. ' +
               'Versions: ' + Object.keys(data.versions) + '. ' +
               'Changes: ' + JSON.stringify(data.changes) + '.'
             '</li>';

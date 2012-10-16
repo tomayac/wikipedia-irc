@@ -176,8 +176,8 @@ function monitorWikipedia(socket) {
         // get diff URL
         var diffUrl = messageComponents[0]
             .replace(/.*?\u000302(.*?)\u0003.+$/, '$1');
-        var toRev = diffUrl.replace(/.*&diff=(\d+).*/, '$1');
-        var fromRev = diffUrl.replace(/.*&oldid=(\d+)&?.*?/, '$1');
+        var toRev = diffUrl.replace(/.*\?diff=(\d+).*/, '$1');
+        var fromRev = diffUrl.replace(/.*&oldid=(\d+).*/, '$1');
         diffUrl = 'http://' + language +
             '.wikipedia.org/w/api.php?action=compare&torev=' + toRev +
             '&fromrev=' + fromRev + '&format=json';

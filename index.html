@@ -3,60 +3,65 @@
     <title>Wikipedia Live Monitor</title>
     <script src="http://localhost:8080/socket.io/socket.io.js"></script>
     <script src="humane.js"></script>
+    <link rel="stylesheet" href="main.css" />
   </head>
   <body>
     <h1>Wikipedia Live Monitor</h1>
-    <h2>Settings</h2>
-    <div>
-      <input id="breakingNewsThreshold" type="range" min="1" max="10" step="1" />
-      <span id="breakingNewsThresholdValue"></span>
-      <label for="breakingNewsThreshold">Breaking News Threshold</label>
-      <small>An article must have at least <i>n</i> edits before it is
-      considered a breaking news candidate.</small>
+    <div class="settings-container">
+      <h2>Settings</h2>
+      <div class="settings">
+        <input id="breakingNewsThreshold" type="range" min="1" max="10" step="1" />
+        <span class="value" id="breakingNewsThresholdValue"></span>
+        <label for="breakingNewsThreshold">Breaking News Threshold</label>
+        <br/>
+        <small class="hint">An article cluster must have at least <i>n</i> edits before it is
+        considered a breaking news candidate.</small>
+      </div>
+
+      <div class="settings">
+        <input id="secondsBetweenEdits" type="range" min="10" max="120" step="10" />
+        <span class="value" id="secondsBetweenEditsValue"></span>
+        <label for="secondsBetweenEdits">Seconds Between Edits</label>
+        <br/>
+        <small class="hint">An article cluster may have at max <i>n</i> seconds in between
+        edits in order to be regarded a breaking news candidate.</small>
+      </div>
+
+      <div class="settings">
+        <input id="numberOfConcurrentEditors" type="range" min="1" max="5" step="1" />
+        <span class="value" id="numberOfConcurrentEditorsValue"></span>
+        <label for="numberOfConcurrentEditors">Number of Concurrent Editors</label>
+        <br/>
+        <small class="hint">An article cluster must be edited by at least <i>n</i> concurrent
+        editors before it is considered a breaking news candidate.</small>
+      </div>
+
+      <div class="settings">
+        <input id="secondsSinceLastEdit" type="range" min="10" max="480" step="10" />
+        <span class="value" id="secondsSinceLastEditValue"></span>
+        <label for="secondsSinceLastEdit">Seconds Since Last Edit</label>
+        <br/>
+        <small class="hint">An article cluster is thrown out of the monitoring loop if its last
+        edit is longer ago than <i>n</i> seconds.</small>
+      </div>
+
+      <div>
+        <button id="reset">Reset</button>
+      </div>
     </div>
 
-    <div>
-      <input id="secondsBetweenEdits" type="range" min="10" max="120" step="10" />
-      <span id="secondsBetweenEditsValue"></span>
-      <label for="secondsBetweenEdits">Seconds Between Edits</label>
-      <small>An article must have at max <i>n</i> seconds in between edits
-      in order to be regarded a breaking news candidate.</small>
-    </div>
-
-    <div>
-      <input id="numberOfConcurrentEditors" type="range" min="1" max="5" step="1" />
-      <span id="numberOfConcurrentEditorsValue"></span>
-      <label for="numberOfConcurrentEditors">Number of Concurrent Editors</label>
-      <small>An article must be edited by at least <i>n</i> concurrent
-      editors before it is considered a breaking news candidate.</small>
-    </div>
-
-    <div>
-      <input id="secondsSinceLastEdit" type="range" min="10" max="480" step="10" />
-      <span id="secondsSinceLastEditValue"></span>
-      <label for="secondsSinceLastEdit">Seconds Since Last Edit</label>
-      <small>An article is thrown out of the monitoring loop if its last edit is
-      longer ago than <i>n</i> seconds.</small>
-    </div>
-
-    <div>
-      <button id="reset">Reset</button>
-    </div>
-
-    <h2>Edited right now:</h2>
+    <h2>Articles edited right now:</h2>
     <div id="firstTimeSeen"></div>
 
-    <h2>Merging right now:</h2>
-    <div id="merging"></div>
-
-    <h2>Concurrently edited in short intervals:</h2>
+    <h2>Article clusters concurrently repeatedly edited in short intervals:</h2>
     <div id="nTimesSeen"></div>
 
-    <h2>Breaking news candidates right now:</h2>
+    <h2>Breaking news candidates article clusters right now:</h2>
     <div id="breakingNewsCandidates"></div>
 
-    <h2>Statistics:</h2>
-    <div id="stats"></div>
+    <small>
+      <div id="stats"></div>
+    </small>
 
     <script>
       var reset = document.querySelector('#reset');
@@ -145,10 +150,23 @@
 
       // converts an article like en:Albert_Einstein to a valid Wikipedia link
       // like so: http://en.wikipedia.org/wiki/Albert_Einstein
-      function linkify(text) {
+      function linkifyTitle(text) {
         var components = text.split(':');
-        return '<a href="http://' + components[0] + '.wikipedia.org/wiki/' +
-            components[1] + '">' + text + '</a>';
+        return '<a class="title" href="http://' + components[0] + '.wikipedia.org/wiki/' +
+            components[1] + '">' + components[1].replace(/_/g, ' ') + '</a>';
+      }
+
+      // converts a user name like en:Jon_Doe to a valid Wikipedia user profile
+      // link like so: http://en.wikipedia.org/wiki/User:Jon_Doe. Ignore
+      // anonymous users
+      function linkifyUser(user) {
+        var components = user.split(':');
+        if (/\b(?:\d{1,3}\.){3}\d{1,3}\b/.test(user)) {
+          return components[1];
+        }
+        return '<a class="user" href="http://' + components[0] +
+            '.wikipedia.org/wiki/User:' + components[1] + '">' + components[1] +
+            '</a>';
       }
 
       function formatLanguages(languages) {
@@ -176,23 +194,38 @@
         }
         firstTimeSeen.innerHTML +=
             '<li>' +
-              '<strong>' + linkify(data.article) + '</strong> ' +
+              '<strong class="title">' + linkifyTitle(data.article) + '</strong> ' +
               '(' + humaneDate(data.timestamp) + '). ' +
-              'Editors: ' + data.editor + '. ' +
-              'Languages: ' + formatLanguages(data.languages) + '.' +
+              '<br/><b>Editor:</b> ' + data.editors.map(linkifyUser) + '. ' +
+              '<b>Language:</b> ' + Object.keys(data.languages) + '.' +
             '</li>';
       }
 
-      function logMerging(data) {
-        var merging = document.querySelector('#merging');
-        if (merging.childNodes.length > 4) {
-          merging.removeChild(merging.firstChild);
-        }
-        merging.innerHTML +=
+      function generateLogMessage(data) {
+        var html =
             '<li>' +
-              '<strong>' + linkify(data.current) + '</strong> with ' +
-              '<strong>' + linkify(data.existing) + '</strong>.' +
+              '<strong class="title">' + linkifyTitle(data.article) + '</strong> ' +
+              '(' + humaneDate(data.timestamp) + '), ' +
+              '<br/><b>Versions:</b> ' + Object.keys(data.versions)
+              .map(linkifyTitle)
+              .toString().replace(/,/g, ', ') + '. ' +
+              '<br/><b>Edit Intervals:</b> ' +
+              data.editIntervals.map(function(interval) {
+                return ~~(interval / 1000) + 'sec';
+              }).toString().replace(/,/g, ', ') + '. ' +
+              '<br/><b>Occurrences:</b> ' + data.occurrences + '. ' +
+              '<br/><b>Editors:</b> ' + data.editors.map(linkifyUser).toString()
+              .replace(/,/g, ', ') + '. ' +
+              '<br/><b>Languages:</b> ' + formatLanguages(data.languages) + '. ' +
+              '<br/><b>Changes:</b> ' +
+              Object.keys(data.changes).map(function(timestamp) {
+                var humane = humaneDate(new Date(parseInt(timestamp, 10)));
+                var url = data.changes[timestamp].diffUrl;
+                return '<a href="' + url + '">' + humane + '</a> ' +
+                    '(' + data.changes[timestamp].delta + ')';
+              }).toString().replace(/,/g, ', ') + '.'
             '</li>';
+        return html;
       }
 
       function logNTimesSeen(data) {
@@ -200,17 +233,7 @@
         if (nTimesSeen.childNodes.length > 4) {
           nTimesSeen.removeChild(nTimesSeen.firstChild);
         }
-        nTimesSeen.innerHTML +=
-            '<li>' +
-              '<strong>' + linkify(data.article) + '</strong> ' +
-              '(' + humaneDate(data.timestamp) + '), ' +
-              'Edit Intervals: ' + data.editIntervals + '. ' +
-              'Occurrences: ' + data.occurrences + '. ' +
-              'Editors: ' + data.editors + '. ' +
-              'Languages: ' + formatLanguages(data.languages) + '. ' +
-              'Versions: ' + Object.keys(data.versions).map(linkify) + '. ' +
-              'Changes: ' + JSON.stringify(data.changes) + '.'
-            '</li>';
+        nTimesSeen.innerHTML += generateLogMessage(data);
       }
 
       function logBreakingNewsCandidate(data) {
@@ -219,26 +242,14 @@
         if (breakingNewsCandidate.childNodes.length > 4) {
           breakingNewsCandidate.removeChild(breakingNewsCandidate.firstChild);
         }
-        breakingNewsCandidate.innerHTML +=
-            '<li>' +
-              '<strong>' + linkify(data.article) + '</strong> ' +
-              '(' + humaneDate(data.timestamp) + '), ' +
-              'Edit Intervals: ' + data.editIntervals + '. ' +
-              'Occurrences: ' + data.occurrences + '. ' +
-              'Editors: ' + data.editors + '. ' +
-              'Languages: ' + formatLanguages(data.languages) + '. ' +
-              'Versions: ' + Object.keys(data.versions) + '. ' +
-              'Changes: ' + JSON.stringify(data.changes) + '.'
-            '</li>';
+        breakingNewsCandidate.innerHTML += generateLogMessage(data);
       }
 
       function logStats(data) {
         var stats = document.querySelector('#stats');
         stats.innerHTML =
-            '<li><strong>Article clusters left:</strong> ' +
-                data.clustersLeft + '</li>' +
-            '<li><strong>Mappings left:</strong> ' +
-                data.mappingsLeft + '</li>';
+            '<strong>Article clusters in the monitoring loop:</strong> ' +
+            data.clustersLeft;
       }
 
       var socket = io.connect('http://localhost:8080');
@@ -268,10 +279,6 @@
 
       socket.on('firstTimeSeen', function(data) {
         logFirstTimeSeen(data);
-      });
-
-      socket.on('merging', function(data) {
-        logMerging(data);
       });
 
       socket.on('nTimesSeen', function(data) {

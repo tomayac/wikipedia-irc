@@ -18,20 +18,20 @@ var MONITOR_LONG_TAIL_WIKIPEDIAS = true;
 // required for Wikipedia API
 var USER_AGENT = 'Wikipedia Live Monitor * IRC nick: wikipedia-live-monitor * Contact: tomac(a)google.com.';
 
-// an article is thrown out of the monitoring loop if its last edit is longer
-// ago than SECONDS_SINCE_LAST_EDIT seconds
+// an article cluster is thrown out of the monitoring loop if its last edit is
+// longer ago than SECONDS_SINCE_LAST_EDIT seconds
 var SECONDS_SINCE_LAST_EDIT = 240;
 
-// an article must have at max SECONDS_BETWEEN_EDITS seconds in between edits
-// in order to be regarded a breaking news candidate
+// an article cluster may have at max SECONDS_BETWEEN_EDITS seconds in between
+// edits in order to be regarded a breaking news candidate
 var SECONDS_BETWEEN_EDITS = 60;
 
-// an article must have at least BREAKING_NEWS_THRESHOLD edits before it is
-// considered a breaking news candidate
+// an article cluster must have at least BREAKING_NEWS_THRESHOLD edits before it
+// is considered a breaking news candidate
 var BREAKING_NEWS_THRESHOLD = 5;
 
-// an article must be edited by at least NUMBER_OF_CONCURRENT_EDITORS concurrent
-// editors before it is considered a breaking news candidate
+// an article cluster must be edited by at least NUMBER_OF_CONCURRENT_EDITORS
+// concurrent editors before it is considered a breaking news candidate
 var NUMBER_OF_CONCURRENT_EDITORS = 2;
 
 // Wikipedia edit bots can account for many false positives, so usually we want
@@ -145,10 +145,16 @@ function monitorWikipedia(socket) {
         // bots are identified by a B flag, as documented here
         // http://www.mediawiki.org/wiki/Help:Tracking_changes
         // (the 'b' is actually uppercase in IRC)
+        //
+        // bots must identify themselves by prefixing or suffixing their
+        // username with "bot".
+        // http://en.wikipedia.org/wiki/Wikipedia:Bot_policy#Bot_accounts
         var flags = messageComponents[0]
             .replace(/.*?\x034\s(.*?)\x0310.+$/, '$1');
         if (DISCARD_WIKIPEDIA_BOTS) {
-          if (/B/.test(flags)) {
+          if ((/B/.test(flags)) ||
+              (/^bot/i.test(editor)) ||
+              (/bot$/i.test(editor))) {
             return;
           }
         }
@@ -157,6 +163,7 @@ function monitorWikipedia(socket) {
         var now;
         // the language format follows the IRC room format: "#language.project"
         var language = to.substring(1, to.indexOf('.'));
+        editor = language + ':' + editor;
         // used to get the language references for language clustering
         var languageClusterUrl = 'http://' + language +
             '.wikipedia.org/w/api.php?action=query&prop=langlinks' +
@@ -181,6 +188,8 @@ function monitorWikipedia(socket) {
         diffUrl = 'http://' + language +
             '.wikipedia.org/w/api.php?action=compare&torev=' + toRev +
             '&fromrev=' + fromRev + '&format=json';
+        var delta = messageComponents[2]
+            .replace(/\s\(\u0002?([+-]\d+)\u0002?\)\s\x0310.*?$/, '$1');
 
         // new article
         if (!articleVersionsMap[article]) {
@@ -195,28 +204,27 @@ function monitorWikipedia(socket) {
             changes: {}
           };
           articles[article].languages[language] = 1;
-          articles[article].changes[now] = diffUrl;
+          articles[article].changes[now] = {
+            diffUrl: diffUrl,
+            delta: delta
+          };
           socket.emit('firstTimeSeen', {
             article: article,
             timestamp: new Date(articles[article].timestamp),
-            editor: editor,
+            editors: [editor],
             languages: articles[article].languages,
             versions: articles[article].versions
           });
           if (VERBOUS && REALLY_VERBOUS) {
             console.log('[ * ] First time seen: "' + article + '". ' +
                 'Timestamp: ' + new Date(articles[article].timestamp) + '. ' +
-                'Editor: ' + editor + '. ' +
+                'Editors: ' + editor + '. ' +
                 'Languages: ' + JSON.stringify(articles[article].languages));
           }
         // existing article
         } else {
+          var currentArticle = article;
           if (article !== articleVersionsMap[article]) {
-            var currentArticle = article;
-            socket.emit('merging', {
-              current: article,
-              existing: articleVersionsMap[article]
-            });
             if (VERBOUS) {
               console.log('[ ⚭ ] Merging ' + article + ' with ' +
                   articleVersionsMap[article]);
@@ -229,8 +237,23 @@ function monitorWikipedia(socket) {
           var now = new Date().getTime();
           articles[article].intervals.push(now - articles[article].timestamp);
           articles[article].timestamp = now;
-          articles[article].changes[now] = diffUrl;
-          if (articles[article].editors.indexOf(editor) === -1) {
+          articles[article].changes[now] = {
+            diffUrl: diffUrl,
+            delta: delta
+          };
+          // we track editors by languages like so: lang:user. if the same user
+          // edits an article in different languages, she is logged as
+          // lang1:user and lang2:user, but we still consider them the same,
+          // and in consequene don't add them as separate editors.
+          var editorPresent = false;
+          var currentEditor = editor.split(':')[1];
+          for (var i = 0, l = articles[article].editors.length; i < l; i++) {
+            if (currentEditor === articles[article].editors[i].split(':')[1]) {
+              editorPresent = true;
+              break;
+            }
+          }
+          if (!editorPresent) {
             articles[article].editors.push(editor);
           }
           if (articles[article].languages[language]) {
@@ -268,6 +291,7 @@ function monitorWikipedia(socket) {
               if (intervals[i] <= SECONDS_BETWEEN_EDITS * 1000) {
                 allEditsInShortDistances = true;
               } else {
+                allEditsInShortDistances = false;
                 break;
               }
             }

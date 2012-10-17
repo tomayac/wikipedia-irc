@@ -309,20 +309,21 @@ function monitorWikipedia(socket) {
                 versions: articles[article].versions,
                 changes: articles[article].changes
               });
-              var red = '\u001b[31m';
-              var reset = '\u001b[0m';
-              console.log(red + '[ ★ ] Breaking news candidate: "' +
-                  article + '". ' +
-                  articles[article].occurrences + ' ' +
-                  'times seen. ' +
-                  'Timestamp: ' + new Date(articles[article].timestamp) + '. ' +
-                  'Edit intervals: ' + articles[article].intervals.toString()
-                  .replace(/(\d+),?/g, '$1ms ').trim() + '. ' +
-                  'Number of editors: ' +
-                  articles[article].editors.length + '. ' +
-                  'Editors: ' + articles[article].editors + '. ' +
-                  'Languages: ' + JSON.stringify(articles[article].languages) +
-                  reset);
+              if (VERBOUS) {
+                console.log('[ ★ ] Breaking news candidate: "' +
+                    article + '". ' +
+                    articles[article].occurrences + ' ' +
+                    'times seen. ' +
+                    'Timestamp: ' + new Date(articles[article].timestamp) +
+                    '. Edit intervals: ' +
+                    articles[article].intervals.toString()
+                    .replace(/(\d+),?/g, '$1ms ').trim() + '. ' +
+                    'Number of editors: ' +
+                    articles[article].editors.length + '. ' +
+                    'Editors: ' + articles[article].editors + '. ' +
+                    'Languages: ' +
+                    JSON.stringify(articles[article].languages));
+              }
             }
           }
         }
@@ -372,7 +373,10 @@ function getLanguageReferences(error, response, body, article) {
       }
     }
   } else {
-    console.log('ERROR (Wikipedia API): ' + response.statusCode + ': ' + body);
+    var red = '\u001b[31m';
+    var reset = '\u001b[0m';    
+    console.log(red + 'ERROR (Wikipedia API)' + reset +
+        (response? ' Status Code: ' + response.statusCode : '') + '.');
   }
 }
 

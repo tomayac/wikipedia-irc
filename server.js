@@ -298,7 +298,12 @@ function monitorWikipedia() {
             // distances must be below a certain threshold
             var intervals = articles[article].intervals;
             var allEditsInShortDistances = false;
-            for (var i = 0, len = intervals.length; i < len; i++) {
+            var index = 0;
+            var intervalsLength = intervals.length;
+            if (intervalsLength > BREAKING_NEWS_THRESHOLD - 1) {
+              index = intervalsLength - BREAKING_NEWS_THRESHOLD + 1;
+            }
+            for (var i = index; i < intervalsLength; i++) {
               if (intervals[i] <= SECONDS_BETWEEN_EDITS * 1000) {
                 allEditsInShortDistances = true;
               } else {
@@ -408,27 +413,28 @@ io.sockets.on('connection', function(socket) {
     breakingNewsThreshold: BREAKING_NEWS_THRESHOLD,
     numberOfConcurrentEditors: NUMBER_OF_CONCURRENT_EDITORS
   });
-});
 
-// react on settings changes
-io.sockets.on('secondsSinceLastEdit', function(data) {
-  SECONDS_SINCE_LAST_EDIT = data.value;
-  console.log('Setting SECONDS_SINCE_LAST_EDIT to: ' +
-      SECONDS_SINCE_LAST_EDIT);
-});
-io.sockets.on('secondsBetweenEdits', function(data) {
-  SECONDS_BETWEEN_EDITS = data.value;
-  console.log('Setting SECONDS_BETWEEN_EDITS to: ' + SECONDS_BETWEEN_EDITS);
-});
-io.sockets.on('breakingNewsThreshold', function(data) {
-  BREAKING_NEWS_THRESHOLD = data.value;
-  console.log('Setting BREAKING_NEWS_THRESHOLD to: ' +
-      BREAKING_NEWS_THRESHOLD);
-});
-io.sockets.on('numberOfConcurrentEditors', function(data) {
-  NUMBER_OF_CONCURRENT_EDITORS = data.value;
-  console.log('Setting NUMBER_OF_CONCURRENT_EDITORS to: ' +
-      NUMBER_OF_CONCURRENT_EDITORS);
+  // react on settings changes
+  socket.on('secondsSinceLastEdit', function(data) {
+    SECONDS_SINCE_LAST_EDIT = data.value;
+    console.log('Setting SECONDS_SINCE_LAST_EDIT to: ' +
+        SECONDS_SINCE_LAST_EDIT);
+  });
+  socket.on('secondsBetweenEdits', function(data) {
+    SECONDS_BETWEEN_EDITS = data.value;
+    console.log('Setting SECONDS_BETWEEN_EDITS to: ' + SECONDS_BETWEEN_EDITS);
+  });
+  socket.on('breakingNewsThreshold', function(data) {
+    BREAKING_NEWS_THRESHOLD = data.value;
+    console.log('Setting BREAKING_NEWS_THRESHOLD to: ' +
+        BREAKING_NEWS_THRESHOLD);
+  });
+  socket.on('numberOfConcurrentEditors', function(data) {
+    NUMBER_OF_CONCURRENT_EDITORS = data.value;
+    console.log('Setting NUMBER_OF_CONCURRENT_EDITORS to: ' +
+        NUMBER_OF_CONCURRENT_EDITORS);
+  });
+
 });
 
 // clean-up function, called regularly like a garbage collector

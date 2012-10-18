@@ -56,7 +56,7 @@
     <h2>Merging right now:</h2>
     <div id="merging"></div>
 
-    <h2>Article clusters concurrently repeatedly edited in short intervals:</h2>
+    <h2>Article clusters repeatedly edited in short intervals:</h2>
     <div id="nTimesSeen"></div>
 
     <h2>Breaking news candidates article clusters right now:</h2>
@@ -164,10 +164,11 @@
       // like so: http://en.wikipedia.org/wiki/Albert_Einstein
       function linkifyTitle(text) {
         var components = text.split(':');
-        return '<img src="' + components[0] + '.png" width="16" height="11"> ' +
+        return '<nobr><img src="' + components[0] +
+            '.png" width="16" height="11"> ' +
             '<a class="title" href="http://' + components[0] +
             '.wikipedia.org/wiki/' + components[1] + '">' +
-            components[1].replace(/_/g, ' ') + '</a>';
+            components[1].replace(/_/g, ' ') + '</a></nobr>';
       }
 
       // converts a user name like en:Jon_Doe to a valid Wikipedia user profile
@@ -183,19 +184,10 @@
             '</a>';
       }
 
-      function formatLanguages(languages) {
-        var languagesArray = [];
-        for(var language in languages) {
-          var obj = {
-            language: language,
-            count: languages[language]
-          };
-          languagesArray.push(obj);
-        }
-        languagesArray.sort(function(a, b) { return b.count - a.count; });
+      function formatLanguages(languagesArray) {
         var html = '';
         languagesArray.forEach(function(lang, i) {
-          html += (i > 0? ', ' : '') + '<b>' + lang.language + '</b>: ' +
+          html += (i > 0 ? ', ' : '') + '<b>' + lang.language + '</b>: ' +
               lang.count;
         });
         return html;
@@ -228,22 +220,45 @@
             '</li>';
       }
 
-      function generateLogMessage(data) {
+      function generateLogMessage(data, isBreakingNews) {
+        // an article cluster's representative article (or centroid) is simply
+        // the first occurrence, no matter what language. we sort by language
+        // popularity, in order for a more meaningful display.
+        var languagesArray = [];
+        for(var language in data.languages) {
+          var obj = {
+            language: language,
+            count: data.languages[language]
+          };
+          languagesArray.push(obj);
+        }
+        languagesArray.sort(function(a, b) { return b.count - a.count; });
+        var versions = {};
+        var components = data.article.split(':');
+        versions[components[0]] = components[0] + ':' + components[1];
+        for (var key in data.versions) {
+          components = key.split(':');
+          versions[components[0]] = components[0] + ':' + components[1];
+        }
+        var versionsHtml = '';
+        for (var i = 1, len = languagesArray.length; i < len; i++) {
+          versionsHtml += (i > 1 ? ', ' : '') +
+              linkifyTitle(versions[languagesArray[i].language]);
+        }
         var html =
             '<li>' +
-              '<strong class="title">' + linkifyTitle(data.article) + '</strong> ' +
-              '(' + humaneDate(data.timestamp) + ')' +
-              '<br/><b>Versions:</b> ' + Object.keys(data.versions)
-              .map(linkifyTitle)
-              .toString().replace(/,/g, ', ') +
+              '<strong class="' + (isBreakingNews ? 'breaking' : '') + '">' +
+              linkifyTitle(versions[languagesArray[0].language]) +
+              '</strong> (' + humaneDate(data.timestamp) + ')' +
+              '<br/><b>Versions:</b> ' + versionsHtml +
               '<br/><b>Last Edit Intervals:</b> ' +
-              data.editIntervals.slice(-5).map(function(interval) {
+              data.editIntervals.slice(-4).map(function(interval) {
                 return ~~(interval / 1000) + 'sec';
               }).toString().replace(/,/g, ', ') +
               '<br/><b>Occurrences:</b> ' + data.occurrences +
               '<br/><b>Editors:</b> ' + data.editors.map(linkifyUser).toString()
               .replace(/,/g, ', ') +
-              '<br/><b>Languages:</b> ' + formatLanguages(data.languages) +
+              '<br/><b>Languages:</b> ' + formatLanguages(languagesArray) +
               '<br/><b>Last Changes:</b> ' +
               Object.keys(data.changes).slice(-5).map(function(timestamp) {
                 var humane = humaneDate(new Date(parseInt(timestamp, 10)));
@@ -260,7 +275,7 @@
         if (nTimesSeen.childNodes.length > 4) {
           nTimesSeen.removeChild(nTimesSeen.firstChild);
         }
-        nTimesSeen.innerHTML += generateLogMessage(data);
+        nTimesSeen.innerHTML += generateLogMessage(data, false);
       }
 
       function logBreakingNewsCandidate(data) {
@@ -269,7 +284,7 @@
         if (breakingNewsCandidate.childNodes.length > 4) {
           breakingNewsCandidate.removeChild(breakingNewsCandidate.firstChild);
         }
-        breakingNewsCandidate.innerHTML += generateLogMessage(data);
+        breakingNewsCandidate.innerHTML += generateLogMessage(data, true);
       }
 
       function logStats(data) {

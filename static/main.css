@@ -18,9 +18,13 @@ LI {
   list-style-type: none;
 }
 
-A.title {
+A.title {  
   color: darkgreen;
   text-decoration: none;
+}
+
+STRONG.breaking {
+  background-color: yellow;
 }
 
 A.user {

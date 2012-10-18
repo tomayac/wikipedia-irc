@@ -7,9 +7,9 @@ var server = http.createServer(app);
 var io = require('socket.io').listen(server);
 
 // verbous debug mode
-var VERBOUS = true;
+var VERBOUS = false;
 // really very verbous debug mode
-var REALLY_VERBOUS = true;
+var REALLY_VERBOUS = false;
 
 // whether to only monitor the 1,000,000+ articles Wikipedias,
 // or also the 100,000+ articles Wikipedias.

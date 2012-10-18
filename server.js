@@ -378,7 +378,7 @@ function getLanguageReferences(error, response, body, article) {
     }
   } else {
     var red = '\u001b[31m';
-    var reset = '\u001b[0m';    
+    var reset = '\u001b[0m';
     console.log(red + new Date() + ' ERROR (Wikipedia API)' + reset +
         (response? ' Status Code: ' + response.statusCode : '') + '.');
   }

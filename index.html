@@ -52,7 +52,7 @@
 
     <h2>Articles edited right now:</h2>
     <div id="firstTimeSeen"></div>
-    
+
     <h2>Merging right now:</h2>
     <div id="merging"></div>
 
@@ -72,7 +72,7 @@
         <strong>It's Open Source</strong> and
         <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a> licensed
         (<a href="https://github.com/tomayac/wikipedia-irc">Fork this project on GitHub</a>)
-      </div>  
+      </div>
     </small>
 
     <script>
@@ -316,7 +316,6 @@
         .value = data.numberOfConcurrentEditors;
         document.querySelector('#numberOfConcurrentEditorsValue')
         .innerHTML = data.numberOfConcurrentEditors;
-
       });
 
       socket.on('firstTimeSeen', function(data) {

@@ -182,11 +182,16 @@ function monitorWikipedia() {
         // get diff URL
         var diffUrl = messageComponents[0]
             .replace(/.*?\u000302(.*?)\u0003.+$/, '$1');
-        var toRev = diffUrl.replace(/.*\?diff=(\d+).*/, '$1');
-        var fromRev = diffUrl.replace(/.*&oldid=(\d+).*/, '$1');
-        diffUrl = 'http://' + language +
-            '.wikipedia.org/w/api.php?action=compare&torev=' + toRev +
-            '&fromrev=' + fromRev + '&format=json';
+        if ((diffUrl.indexOf('diff') !== -1) &&
+            (diffUrl.indexOf('oldId') !== -1)) {
+          var toRev = diffUrl.replace(/.*\?diff=(\d+).*/, '$1');
+          var fromRev = diffUrl.replace(/.*&oldid=(\d+).*/, '$1');
+          diffUrl = 'http://' + language +
+              '.wikipedia.org/w/api.php?action=compare&torev=' + toRev +
+              '&fromrev=' + fromRev + '&format=json';
+        } else {
+          diffUrl = '';
+        }
         var delta = messageComponents[2]
             .replace(/\s\(\u0002?([+-]\d+)\u0002?\)\s\x0310.*?$/, '$1');
 
@@ -205,7 +210,8 @@ function monitorWikipedia() {
           articles[article].languages[language] = 1;
           articles[article].changes[now] = {
             diffUrl: diffUrl,
-            delta: delta
+            delta: delta,
+            language: language
           };
           io.sockets.emit('firstTimeSeen', {
             article: article,
@@ -243,7 +249,8 @@ function monitorWikipedia() {
           articles[article].timestamp = now;
           articles[article].changes[now] = {
             diffUrl: diffUrl,
-            delta: delta
+            delta: delta,
+            language: language
           };
           // we track editors by languages like so: lang:user. if the same user
           // edits an article in different languages, she is logged as

@@ -183,7 +183,7 @@ function monitorWikipedia() {
         var diffUrl = messageComponents[0]
             .replace(/.*?\u000302(.*?)\u0003.+$/, '$1');
         if ((diffUrl.indexOf('diff') !== -1) &&
-            (diffUrl.indexOf('oldId') !== -1)) {
+            (diffUrl.indexOf('oldid') !== -1)) {
           var toRev = diffUrl.replace(/.*\?diff=(\d+).*/, '$1');
           var fromRev = diffUrl.replace(/.*&oldid=(\d+).*/, '$1');
           diffUrl = 'http://' + language +

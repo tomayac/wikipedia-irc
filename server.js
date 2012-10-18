@@ -7,9 +7,9 @@ var server = http.createServer(app);
 var io = require('socket.io').listen(server);
 
 // verbous debug mode
-var VERBOUS = false;
+var VERBOUS = true;
 // really very verbous debug mode
-var REALLY_VERBOUS = false;
+var REALLY_VERBOUS = true;
 
 // whether to only monitor the 1,000,000+ articles Wikipedias,
 // or also the 100,000+ articles Wikipedias.
@@ -45,7 +45,6 @@ var IRC_NICK = 'wikipedia-live-monitor';
 // IRC rooms are of the form #lang.wikipedia
 // the list of languages is here:
 // http://meta.wikimedia.org/wiki/List_of_Wikipedias#All_Wikipedias_ordered_by_number_of_articles
-
 // http://meta.wikimedia.org/wiki/List_of_Wikipedias#1_000_000.2B_articles
 var millionPlusLanguages = {
   en: true,
@@ -119,7 +118,7 @@ var articles = {};
 var articleClusters = {};
 var articleVersionsMap = {};
 
-function monitorWikipedia(socket) {
+function monitorWikipedia() {
   // fires whenever a new IRC message arrives on any of the IRC rooms
   client.addListener('message', function(from, to, message) {
     // this is the Wikipedia IRC bot that announces live changes
@@ -193,7 +192,7 @@ function monitorWikipedia(socket) {
 
         // new article
         if (!articleVersionsMap[article]) {
-          var now = new Date().getTime();
+          now = new Date().getTime();
           articles[article] = {
             timestamp: now,
             occurrences: 1,
@@ -208,7 +207,7 @@ function monitorWikipedia(socket) {
             diffUrl: diffUrl,
             delta: delta
           };
-          socket.emit('firstTimeSeen', {
+          io.sockets.emit('firstTimeSeen', {
             article: article,
             timestamp: new Date(articles[article].timestamp),
             editors: [editor],
@@ -224,7 +223,13 @@ function monitorWikipedia(socket) {
         // existing article
         } else {
           var currentArticle = article;
+          now = new Date().getTime();
           if (article !== articleVersionsMap[article]) {
+            io.sockets.emit('merging', {
+              current: article,
+              existing: articleVersionsMap[article],
+              timestamp: new Date(now)
+            });
             if (VERBOUS) {
               console.log('[ ⚭ ] Merging ' + article + ' with ' +
                   articleVersionsMap[article]);
@@ -234,7 +239,6 @@ function monitorWikipedia(socket) {
           // update statistics of the article
           articles[article].occurrences += 1;
           articles[article].versions[currentArticle] = true;
-          var now = new Date().getTime();
           articles[article].intervals.push(now - articles[article].timestamp);
           articles[article].timestamp = now;
           articles[article].changes[now] = {
@@ -261,7 +265,7 @@ function monitorWikipedia(socket) {
           } else {
             articles[article].languages[language] = 1;
           }
-          socket.emit('nTimesSeen', {
+          io.sockets.emit('nTimesSeen', {
             article: article,
             occurrences: articles[article].occurrences,
             timestamp: new Date(articles[article].timestamp),
@@ -299,7 +303,7 @@ function monitorWikipedia(socket) {
             var numberOfEditors = articles[article].editors.length;
             if ((allEditsInShortDistances) &&
                 (numberOfEditors >= NUMBER_OF_CONCURRENT_EDITORS)) {
-              socket.emit('breakingNewsCandidate', {
+              io.sockets.emit('breakingNewsCandidate', {
                 article: article,
                 occurrences: articles[article].occurrences,
                 timestamp: new Date(articles[article].timestamp),
@@ -375,11 +379,13 @@ function getLanguageReferences(error, response, body, article) {
   } else {
     var red = '\u001b[31m';
     var reset = '\u001b[0m';    
-    console.log(red + 'ERROR (Wikipedia API)' + reset +
+    console.log(red + new Date() + ' ERROR (Wikipedia API)' + reset +
         (response? ' Status Code: ' + response.statusCode : '') + '.');
   }
 }
 
+// start static serving
+// and set default route to index.html
 app.use(express.static(__dirname + '/static'));
 app.get('/', function(req, res) {
   res.sendfile(__dirname + '/index.html');
@@ -388,32 +394,6 @@ app.get('/', function(req, res) {
 // setting up the Web Socket-based communication with the front-end
 io.set('log level', 1);
 io.sockets.on('connection', function(socket) {
-
-  // clean-up function, called regularly like a garbage collector
-  function cleanUpMonitoringLoop() {
-    for (var key in articles) {
-      var now = new Date().getTime();
-      if (now - articles[key].timestamp > SECONDS_SINCE_LAST_EDIT * 1000) {
-        delete articles[key];
-        for (version in articleClusters[key]) {
-          delete articleVersionsMap[version];
-        }
-        delete articleClusters[key];
-        delete articleVersionsMap[key];
-        if (VERBOUS && REALLY_VERBOUS) {
-          console.log('[ † ] No more mentions: "' + key + '". ' +
-              'Article clusters left: ' +
-                  Object.keys(articleClusters).length + '. ' +
-              'Mappings left: ' + Object.keys(articleVersionsMap).length);
-        }
-      }
-    }
-    socket.emit('stats', {
-      clustersLeft: Object.keys(articleClusters).length,
-      mappingsLeft: Object.keys(articleVersionsMap).length
-    });
-  }
-
   // send the default settings
   socket.emit('defaultSettings', {
     secondsSinceLastEdit: SECONDS_SINCE_LAST_EDIT,
@@ -421,37 +401,60 @@ io.sockets.on('connection', function(socket) {
     breakingNewsThreshold: BREAKING_NEWS_THRESHOLD,
     numberOfConcurrentEditors: NUMBER_OF_CONCURRENT_EDITORS
   });
-
-  // start the monitoring process upon a connection
-  monitorWikipedia(socket);
-
-  // start garbage collector
-  setInterval(function() {
-    cleanUpMonitoringLoop();
-  }, 10 * 1000);
-
-  // react on settings changes
-  socket.on('secondsSinceLastEdit', function(data) {
-    SECONDS_SINCE_LAST_EDIT = data.value;
-    console.log('Setting SECONDS_SINCE_LAST_EDIT to: ' +
-        SECONDS_SINCE_LAST_EDIT);
-  });
-  socket.on('secondsBetweenEdits', function(data) {
-    SECONDS_BETWEEN_EDITS = data.value;
-    console.log('Setting SECONDS_BETWEEN_EDITS to: ' + SECONDS_BETWEEN_EDITS);
-  });
-  socket.on('breakingNewsThreshold', function(data) {
-    BREAKING_NEWS_THRESHOLD = data.value;
-    console.log('Setting BREAKING_NEWS_THRESHOLD to: ' +
-        BREAKING_NEWS_THRESHOLD);
-  });
-  socket.on('numberOfConcurrentEditors', function(data) {
-    NUMBER_OF_CONCURRENT_EDITORS = data.value;
-    console.log('Setting NUMBER_OF_CONCURRENT_EDITORS to: ' +
-        NUMBER_OF_CONCURRENT_EDITORS);
-  });
-
 });
+
+// react on settings changes
+io.sockets.on('secondsSinceLastEdit', function(data) {
+  SECONDS_SINCE_LAST_EDIT = data.value;
+  console.log('Setting SECONDS_SINCE_LAST_EDIT to: ' +
+      SECONDS_SINCE_LAST_EDIT);
+});
+io.sockets.on('secondsBetweenEdits', function(data) {
+  SECONDS_BETWEEN_EDITS = data.value;
+  console.log('Setting SECONDS_BETWEEN_EDITS to: ' + SECONDS_BETWEEN_EDITS);
+});
+io.sockets.on('breakingNewsThreshold', function(data) {
+  BREAKING_NEWS_THRESHOLD = data.value;
+  console.log('Setting BREAKING_NEWS_THRESHOLD to: ' +
+      BREAKING_NEWS_THRESHOLD);
+});
+io.sockets.on('numberOfConcurrentEditors', function(data) {
+  NUMBER_OF_CONCURRENT_EDITORS = data.value;
+  console.log('Setting NUMBER_OF_CONCURRENT_EDITORS to: ' +
+      NUMBER_OF_CONCURRENT_EDITORS);
+});
+
+// clean-up function, called regularly like a garbage collector
+function cleanUpMonitoringLoop() {
+  for (var key in articles) {
+    var now = new Date().getTime();
+    if (now - articles[key].timestamp > SECONDS_SINCE_LAST_EDIT * 1000) {
+      delete articles[key];
+      for (version in articleClusters[key]) {
+        delete articleVersionsMap[version];
+      }
+      delete articleClusters[key];
+      delete articleVersionsMap[key];
+      if (VERBOUS && REALLY_VERBOUS) {
+        console.log('[ † ] No more mentions: "' + key + '". ' +
+            'Article clusters left: ' +
+                Object.keys(articleClusters).length + '. ' +
+            'Mappings left: ' + Object.keys(articleVersionsMap).length);
+      }
+    }
+  }
+  io.sockets.emit('stats', {
+    clustersLeft: Object.keys(articleClusters).length
+  });
+}
+
+// start garbage collector
+setInterval(function() {
+  cleanUpMonitoringLoop();
+}, 10 * 1000);
+
+// start the monitoring process upon a connection
+monitorWikipedia();
 
 // start the server
 server.listen(8080);

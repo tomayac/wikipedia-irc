@@ -3,8 +3,19 @@ BODY {
   font-size: 12pt;
 }
 
+H1 {
+  color: blue;
+  text-shadow: 1px 1px 1px gray;
+}
+
+H2 {
+  color: darkblue;
+  text-shadow: 1px 1px 1px darkgray;
+}
+
 LI {
   margin-bottom: 1em;
+  list-style-type: none;
 }
 
 A.title {

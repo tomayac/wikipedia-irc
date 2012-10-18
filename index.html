@@ -52,6 +52,9 @@
 
     <h2>Articles edited right now:</h2>
     <div id="firstTimeSeen"></div>
+    
+    <h2>Merging right now:</h2>
+    <div id="merging"></div>
 
     <h2>Article clusters concurrently repeatedly edited in short intervals:</h2>
     <div id="nTimesSeen"></div>
@@ -59,8 +62,17 @@
     <h2>Breaking news candidates article clusters right now:</h2>
     <div id="breakingNewsCandidates"></div>
 
+    <hr size="1"/>
     <small>
       <div id="stats"></div>
+      <div>
+        Proudly developed in Europe by <strong>Thomas Steiner</strong>
+        (<a href="mailto:tomac@google.com">tomac@google.com</a>)
+        <br/>
+        <strong>It's Open Source</strong> and
+        <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a> licensed
+        (<a href="https://github.com/tomayac/wikipedia-irc">Fork this project on GitHub</a>)
+      </div>  
     </small>
 
     <script>
@@ -152,8 +164,10 @@
       // like so: http://en.wikipedia.org/wiki/Albert_Einstein
       function linkifyTitle(text) {
         var components = text.split(':');
-        return '<a class="title" href="http://' + components[0] + '.wikipedia.org/wiki/' +
-            components[1] + '">' + components[1].replace(/_/g, ' ') + '</a>';
+        return '<img src="' + components[0] + '.png" width="16" height="11"> ' +
+            '<a class="title" href="http://' + components[0] +
+            '.wikipedia.org/wiki/' + components[1] + '">' +
+            components[1].replace(/_/g, ' ') + '</a>';
       }
 
       // converts a user name like en:Jon_Doe to a valid Wikipedia user profile
@@ -189,15 +203,28 @@
 
       function logFirstTimeSeen(data) {
         var firstTimeSeen = document.querySelector('#firstTimeSeen');
-        if (firstTimeSeen.childNodes.length > 4) {
+        if (firstTimeSeen.childNodes.length > 0) {
           firstTimeSeen.removeChild(firstTimeSeen.firstChild);
         }
         firstTimeSeen.innerHTML +=
             '<li>' +
               '<strong class="title">' + linkifyTitle(data.article) + '</strong> ' +
-              '(' + humaneDate(data.timestamp) + '). ' +
-              '<br/><b>Editor:</b> ' + data.editors.map(linkifyUser) + '. ' +
-              '<b>Language:</b> ' + Object.keys(data.languages) + '.' +
+              '(' + humaneDate(data.timestamp) + ')' +
+              '<br/><b>Editor:</b> ' + data.editors.map(linkifyUser) + ' ' +
+              '<b>Language:</b> ' + Object.keys(data.languages) +
+            '</li>';
+      }
+
+      function logMerging(data) {
+        var merging = document.querySelector('#merging');
+        if (merging.childNodes.length > 0) {
+          merging.removeChild(merging.firstChild);
+        }
+        merging.innerHTML +=
+            '<li>' +
+              '<strong>' + linkifyTitle(data.current) + '</strong> with ' +
+              '<strong>' + linkifyTitle(data.existing) + '</strong> ' +
+              '(' + humaneDate(data.timestamp) + ')' +
             '</li>';
       }
 
@@ -205,25 +232,25 @@
         var html =
             '<li>' +
               '<strong class="title">' + linkifyTitle(data.article) + '</strong> ' +
-              '(' + humaneDate(data.timestamp) + '), ' +
+              '(' + humaneDate(data.timestamp) + ')' +
               '<br/><b>Versions:</b> ' + Object.keys(data.versions)
               .map(linkifyTitle)
-              .toString().replace(/,/g, ', ') + '. ' +
-              '<br/><b>Edit Intervals:</b> ' +
-              data.editIntervals.map(function(interval) {
+              .toString().replace(/,/g, ', ') +
+              '<br/><b>Last Edit Intervals:</b> ' +
+              data.editIntervals.slice(-5).map(function(interval) {
                 return ~~(interval / 1000) + 'sec';
-              }).toString().replace(/,/g, ', ') + '. ' +
-              '<br/><b>Occurrences:</b> ' + data.occurrences + '. ' +
+              }).toString().replace(/,/g, ', ') +
+              '<br/><b>Occurrences:</b> ' + data.occurrences +
               '<br/><b>Editors:</b> ' + data.editors.map(linkifyUser).toString()
-              .replace(/,/g, ', ') + '. ' +
-              '<br/><b>Languages:</b> ' + formatLanguages(data.languages) + '. ' +
-              '<br/><b>Changes:</b> ' +
-              Object.keys(data.changes).map(function(timestamp) {
+              .replace(/,/g, ', ') +
+              '<br/><b>Languages:</b> ' + formatLanguages(data.languages) +
+              '<br/><b>Last Changes:</b> ' +
+              Object.keys(data.changes).slice(-5).map(function(timestamp) {
                 var humane = humaneDate(new Date(parseInt(timestamp, 10)));
                 var url = data.changes[timestamp].diffUrl;
                 return '<a href="' + url + '">' + humane + '</a> ' +
                     '(' + data.changes[timestamp].delta + ')';
-              }).toString().replace(/,/g, ', ') + '.'
+              }).toString().replace(/,/g, ', ') +
             '</li>';
         return html;
       }
@@ -279,6 +306,10 @@
 
       socket.on('firstTimeSeen', function(data) {
         logFirstTimeSeen(data);
+      });
+
+      socket.on('merging', function(data) {
+        logMerging(data);
       });
 
       socket.on('nTimesSeen', function(data) {

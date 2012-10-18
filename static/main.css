@@ -21,6 +21,7 @@ LI {
 A.title {
   color: darkgreen;
   text-decoration: none;
+  line-height: 1.5em;
 }
 
 STRONG.breaking {
@@ -29,6 +30,7 @@ STRONG.breaking {
 
 A.user {
   text-decoration: none;
+  line-height: 1.5em;
 }
 
 SMALL.hint {

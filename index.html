@@ -256,9 +256,11 @@
                 return ~~(interval / 1000) + 'sec';
               }).toString().replace(/,/g, ', ') +
               '<br/><b>Occurrences:</b> ' + data.occurrences +
-              '<br/><b>Editors:</b> ' + data.editors.map(linkifyUser).toString()
+              '<br/><b>Editors</b> (' + data.editors.length + '): ' +
+              data.editors.map(linkifyUser).toString()
               .replace(/,/g, ', ') +
-              '<br/><b>Languages:</b> ' + formatLanguages(languagesArray) +
+              '<br/><b>Languages</b> (' + languagesArray.length + '): ' +
+              formatLanguages(languagesArray) +
               '<br/><b>Last Changes:</b> ' +
               Object.keys(data.changes).slice(-5).map(function(timestamp) {
                 var humane = humaneDate(new Date(parseInt(timestamp, 10)));

@@ -51,16 +51,16 @@
       </div>
     </div>
 
-    <h2>Articles edited right now:</h2>
+    <h2>Articles Edited Right Now:</h2>
     <div id="firstTimeSeen"></div>
 
-    <h2>Merging right now:</h2>
+    <h2>Merging Right Now:</h2>
     <div id="merging"></div>
 
-    <h2>Article clusters repeatedly edited in short intervals:</h2>
+    <h2>Article Clusters Repeatedly Edited In Short Intervals:</h2>
     <div id="nTimesSeen"></div>
 
-    <h2>Breaking news candidates article clusters right now:</h2>
+    <h2>Breaking News Candidate Article Clusters Right Now:</h2>
     <div id="breakingNewsCandidates"></div>
 
     <div id="changes"></div>
@@ -69,12 +69,12 @@
     <small>
       <div id="stats"></div>
       <div>
-        Proudly developed in Europe by <strong>Thomas Steiner</strong>
+        Proudly Developed In Europe By <strong>Thomas Steiner</strong>
         (<a href="mailto:tomac@google.com">tomac@google.com</a>)
         <br/>
         <strong>It's Open Source</strong> and
-        <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a> licensed
-        (<a href="https://github.com/tomayac/wikipedia-irc">Fork this project on GitHub</a>)
+        <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a> Licensed
+        (<a href="https://github.com/tomayac/wikipedia-irc">Fork This Project On GitHub</a>)
       </div>
     </small>
 
@@ -177,22 +177,27 @@
       // converts a user name like en:Jon_Doe to a valid Wikipedia user profile
       // link like so: http://en.wikipedia.org/wiki/User:Jon_Doe. Ignore
       // anonymous users
-      function linkifyUser(user) {
+      function linkifyEditor(user) {
         var components = user.split(':');
         if (/\b(?:\d{1,3}\.){3}\d{1,3}\b/.test(user)) {
           return '<a class="user">' + components[1] + '</a> ' +
-              '(' + components[0] + ')';
+              '(' + components[0].split(',').map(function(language) {
+                return '<b>' + language + '</b>'; })
+              .toString().replace(/,/g, ', ') + ')';
         }
-        return '<a class="user" href="http://' + components[0] +
+        return '<a class="user" href="http://' +
+            components[0].replace(/(\w+),.*/, '$1') +
             '.wikipedia.org/wiki/User:' + components[1] + '">' + components[1] +
-            '</a> (' + components[0] + ')';
+            '</a> (' + components[0].split(',').map(function(language) {
+              return '<b>' + language + '</b>'; })
+            .toString().replace(/,/g, ', ') + ')';
       }
 
       function formatLanguages(languagesArray) {
         var html = '';
         languagesArray.forEach(function(lang, i) {
-          html += (i > 0 ? ', ' : '') + '<b>' + lang.language + '</b>: ' +
-              lang.count;
+          html += (i > 0 ? ', ' : '') + '<b>' + lang.language + '</b> (' +
+              lang.count + ')';
         });
         return html;
       }
@@ -206,7 +211,7 @@
             '<li>' +
               '<strong class="title">' + linkifyTitle(data.article) + '</strong> ' +
               '(' + humaneDate(data.timestamp) + ')' +
-              '<br/><b>Editor:</b> ' + data.editors.map(linkifyUser) + ' ' +
+              '<br/><b>Editor:</b> ' + data.editors.map(linkifyEditor) + ' ' +
               '<b>Language:</b> ' + Object.keys(data.languages) +
             '</li>';
       }
@@ -262,12 +267,12 @@
                   '<span class="condition-false">✗</span> ') +
               '</span> <span class="condition">≤ ' +
               document.querySelector('#secondsBetweenEdits').value +
-              'sec between Edits ' + (data.conditions.secondsBetweenEdits ?
+              ' Seconds Between Edits ' + (data.conditions.secondsBetweenEdits ?
                   '<span class="condition-true">✓</span> ' :
                   '<span class="condition-false">✗</span> ') +
               '</span> <span class="condition">≥ ' +
               document.querySelector('#numberOfConcurrentEditors').value +
-              ' concurrent Editors ' +
+              ' Concurrent Editors ' +
               (data.conditions.numberOfConcurrentEditors ?
                   '<span class="condition-true">✓</span>' :
                   '<span class="condition-false">✗</span>') +
@@ -277,7 +282,7 @@
               }).toString().replace(/,/g, ', ') +
               '<br/><b>Occurrences:</b> ' + data.occurrences +
               '<br/><b>Editors</b> (' + data.editors.length + '): ' +
-              data.editors.map(linkifyUser).toString()
+              data.editors.map(linkifyEditor).toString()
               .replace(/,/g, ', ') +
               '<br/><b>Languages</b> (' + languagesArray.length + '): ' +
               formatLanguages(languagesArray) +
@@ -286,7 +291,8 @@
                 var humane = humaneDate(new Date(parseInt(timestamp, 10)));
                 var url = data.changes[timestamp].diffUrl;
                 return '<a class="changes" href="' + url + '">' + humane +
-                    '</a> (<b>' + data.changes[timestamp].language + '</b> ' +
+                    '</a> ' + data.changes[timestamp].editor.split(':')[1] +
+                    ' (<b>' + data.changes[timestamp].language + '</b>, ' +
                     data.changes[timestamp].delta + ')';
               }).toString().replace(/,/g, ', ') +
             '</li>';
@@ -315,7 +321,7 @@
       function logStats(data) {
         var stats = document.querySelector('#stats');
         stats.innerHTML =
-            '<strong>Article clusters in the monitoring loop:</strong> ' +
+            '<strong>Article Clusters In the Monitoring Loop:</strong> ' +
             data.clustersLeft;
       }
 

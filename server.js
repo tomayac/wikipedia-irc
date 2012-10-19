@@ -272,6 +272,34 @@ function monitorWikipedia() {
           } else {
             articles[article].languages[language] = 1;
           }
+          // check the three breaking news conditions:
+          //
+          // (1) breaking news threshold
+          var breakingNewsThresholdReached =
+              articles[article].occurrences >= BREAKING_NEWS_THRESHOLD;
+          // (2) check interval distances between edits
+          // if something is suspected to be breaking news, all interval
+          // distances must be below a certain threshold
+          var intervals = articles[article].intervals;
+          var allEditsInShortDistances = false;
+          var index = 0;
+          var intervalsLength = intervals.length;
+          if (intervalsLength > BREAKING_NEWS_THRESHOLD - 1) {
+            index = intervalsLength - BREAKING_NEWS_THRESHOLD + 1;
+          }
+          for (var i = index; i < intervalsLength; i++) {
+            if (intervals[i] <= SECONDS_BETWEEN_EDITS * 1000) {
+              allEditsInShortDistances = true;
+            } else {
+              allEditsInShortDistances = false;
+              break;
+            }
+          }
+          // (3) number of concurrent editors
+          var numberOfEditors = articles[article].editors.length;
+          var numberOfEditorsReached =
+              numberOfEditors >= NUMBER_OF_CONCURRENT_EDITORS;
+
           io.sockets.emit('nTimesSeen', {
             article: article,
             occurrences: articles[article].occurrences,
@@ -280,7 +308,12 @@ function monitorWikipedia() {
             editors: articles[article].editors,
             languages: articles[article].languages,
             versions: articles[article].versions,
-            changes: articles[article].changes
+            changes: articles[article].changes,
+            conditions: {
+              breakingNewsThreshold: breakingNewsThresholdReached,
+              secondsBetweenEdits: allEditsInShortDistances,
+              numberOfConcurrentEditors: numberOfEditorsReached
+            }
           });
           if (VERBOUS) {
             console.log('[ ! ] ' + articles[article].occurrences + ' ' +
@@ -292,29 +325,10 @@ function monitorWikipedia() {
                 'Editors: ' + articles[article].editors + '. ' +
                 'Languages: ' + JSON.stringify(articles[article].languages));
           }
-          if (articles[article].occurrences >= BREAKING_NEWS_THRESHOLD) {
-            // check interval distances between edits
-            // if something is suspected to be breaking news, all interval
-            // distances must be below a certain threshold
-            var intervals = articles[article].intervals;
-            var allEditsInShortDistances = false;
-            var index = 0;
-            var intervalsLength = intervals.length;
-            if (intervalsLength > BREAKING_NEWS_THRESHOLD - 1) {
-              index = intervalsLength - BREAKING_NEWS_THRESHOLD + 1;
-            }
-            for (var i = index; i < intervalsLength; i++) {
-              if (intervals[i] <= SECONDS_BETWEEN_EDITS * 1000) {
-                allEditsInShortDistances = true;
-              } else {
-                allEditsInShortDistances = false;
-                break;
-              }
-            }
+          if (breakingNewsThresholdReached) {
             // check if at least two editors made edits at roughly the same time
-            var numberOfEditors = articles[article].editors.length;
             if ((allEditsInShortDistances) &&
-                (numberOfEditors >= NUMBER_OF_CONCURRENT_EDITORS)) {
+                (numberOfEditorsReached)) {
               io.sockets.emit('breakingNewsCandidate', {
                 article: article,
                 occurrences: articles[article].occurrences,
@@ -323,7 +337,12 @@ function monitorWikipedia() {
                 editors: articles[article].editors,
                 languages: articles[article].languages,
                 versions: articles[article].versions,
-                changes: articles[article].changes
+                changes: articles[article].changes,
+                conditions: {
+                  breakingNewsThreshold: breakingNewsThresholdReached,
+                  secondsBetweenEdits: allEditsInShortDistances,
+                  numberOfConcurrentEditors: numberOfEditorsReached
+                }
               });
               if (VERBOUS) {
                 console.log('[ ★ ] Breaking news candidate: "' +

@@ -24,6 +24,21 @@ A.title {
   line-height: 1.5em;
 }
 
+SPAN.condition {
+  margin-right: 1em;
+  background-color: lightgray;
+}
+
+SPAN.condition-true {
+  font-weight: bold;
+  color: green;
+}
+
+SPAN.condition-false {
+  font-weight: bold;
+  color: red;
+}
+
 STRONG.breaking {
   background-color: yellow;
 }

@@ -180,11 +180,12 @@
       function linkifyUser(user) {
         var components = user.split(':');
         if (/\b(?:\d{1,3}\.){3}\d{1,3}\b/.test(user)) {
-          return '<a class="user">' + components[1] + '</a>';
+          return '<a class="user">' + components[1] + '</a> ' +
+              '(' + components[0] + ')';
         }
         return '<a class="user" href="http://' + components[0] +
             '.wikipedia.org/wiki/User:' + components[1] + '">' + components[1] +
-            '</a>';
+            '</a> (' + components[0] + ')';
       }
 
       function formatLanguages(languagesArray) {
@@ -254,7 +255,23 @@
               linkifyTitle(versions[languagesArray[0].language]) +
               '</strong> (' + humaneDate(data.timestamp) + ')' +
               '<br/><b>Versions:</b> ' + versionsHtml +
-              '<br/><b>Last Edit Intervals:</b> ' +
+              '<br/><b>Conditions:</b> <span class="condition">' +
+              '≥ ' + document.querySelector('#breakingNewsThreshold').value +
+              ' Occurrences ' + (data.conditions.breakingNewsThreshold ?
+                  '<span class="condition-true">✓</span> ' :
+                  '<span class="condition-false">✗</span> ') +
+              '</span> <span class="condition">≤ ' +
+              document.querySelector('#secondsBetweenEdits').value +
+              'sec between Edits ' + (data.conditions.secondsBetweenEdits ?
+                  '<span class="condition-true">✓</span> ' :
+                  '<span class="condition-false">✗</span> ') +
+              '</span> <span class="condition">≥ ' +
+              document.querySelector('#numberOfConcurrentEditors').value +
+              ' concurrent Editors ' +
+              (data.conditions.numberOfConcurrentEditors ?
+                  '<span class="condition-true">✓</span>' :
+                  '<span class="condition-false">✗</span>') +
+              '</span><br/><b>Last Edit Intervals:</b> ' +
               data.editIntervals.slice(-4).map(function(interval) {
                 return ~~(interval / 1000) + 'sec';
               }).toString().replace(/,/g, ', ') +

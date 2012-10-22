@@ -7,8 +7,10 @@
     <link rel="stylesheet" href="main.css" />
   </head>
   <body>
+    <a id="settings-link" class="settings"><b>⚙</b> Settings</a>
     <h1>Wikipedia Live Monitor</h1>
-    <div class="settings-container">
+    <div id="settings-container" class="settings-container">
+      <a id="settings-close-link" class="settings"><b>✓</b> Close and Save</a>
       <h2>Settings</h2>
       <div class="settings">
         <input id="breakingNewsThreshold" type="range" min="1" max="10" step="1" />
@@ -115,51 +117,6 @@
 
         socket.emit('secondsBetweenEdits', {
           value: secondsBetweenEdits.value
-        });
-      }, false);
-
-      var secondsSinceLastEdit =
-          document.querySelector('#secondsSinceLastEdit');
-      var secondsSinceLastEditValue =
-          document.querySelector('#secondsSinceLastEditValue');
-      secondsSinceLastEdit.addEventListener('change', function(e) {
-        secondsSinceLastEditValue.innerHTML = secondsSinceLastEdit.value;
-        socket.emit('secondsSinceLastEdit', {
-          value: secondsSinceLastEdit.value
-        });
-      }, false);
-
-      var secondsBetweenEdits =
-          document.querySelector('#secondsBetweenEdits');
-      var secondsBetweenEditsValue =
-          document.querySelector('#secondsBetweenEditsValue');
-      secondsBetweenEdits.addEventListener('change', function(e) {
-        secondsBetweenEditsValue.innerHTML = secondsBetweenEdits.value;
-        socket.emit('secondsBetweenEdits', {
-          value: secondsBetweenEdits.value
-        });
-      }, false);
-
-      var numberOfConcurrentEditors =
-          document.querySelector('#numberOfConcurrentEditors');
-      var numberOfConcurrentEditorsValue =
-          document.querySelector('#numberOfConcurrentEditorsValue');
-      numberOfConcurrentEditors.addEventListener('change', function(e) {
-        numberOfConcurrentEditorsValue.innerHTML =
-            numberOfConcurrentEditors.value;
-        socket.emit('numberOfConcurrentEditors', {
-          value: numberOfConcurrentEditors.value
-        });
-      }, false);
-
-      var breakingNewsThreshold =
-          document.querySelector('#breakingNewsThreshold');
-      var breakingNewsThresholdValue =
-          document.querySelector('#breakingNewsThresholdValue');
-      breakingNewsThreshold.addEventListener('change', function(e) {
-        breakingNewsThresholdValue.innerHTML = breakingNewsThreshold.value;
-        socket.emit('breakingNewsThreshold', {
-          value: breakingNewsThreshold.value
         });
       }, false);
 
@@ -385,50 +342,6 @@
             data.clustersLeft;
       }
 
-      var socket = io.connect('http://localhost:8080');
-
-      socket.on('defaultSettings', function(data) {
-        document.querySelector('#secondsSinceLastEdit')
-        .value = data.secondsSinceLastEdit;
-        document.querySelector('#secondsSinceLastEditValue')
-        .innerHTML = data.secondsSinceLastEdit;
-
-        document.querySelector('#secondsBetweenEdits')
-        .value = data.secondsBetweenEdits;
-        document.querySelector('#secondsBetweenEditsValue')
-        .innerHTML = data.secondsBetweenEdits;
-
-        document.querySelector('#breakingNewsThreshold')
-        .value = data.breakingNewsThreshold;
-        document.querySelector('#breakingNewsThresholdValue')
-        .innerHTML = data.breakingNewsThreshold;
-
-        document.querySelector('#numberOfConcurrentEditors')
-        .value = data.numberOfConcurrentEditors;
-        document.querySelector('#numberOfConcurrentEditorsValue')
-        .innerHTML = data.numberOfConcurrentEditors;
-      });
-
-      socket.on('firstTimeSeen', function(data) {
-        logFirstTimeSeen(data);
-      });
-
-      socket.on('merging', function(data) {
-        logMerging(data);
-      });
-
-      socket.on('nTimesSeen', function(data) {
-        logNTimesSeen(data);
-      });
-
-      socket.on('breakingNewsCandidate', function(data) {
-        logBreakingNewsCandidate(data);
-      });
-
-      socket.on('stats', function(data) {
-        logStats(data);
-      });
-
       function attachClickHandler() {
         var changesLinks = document.querySelectorAll('A.changes');
         for (var i = 0, len = changesLinks.length; i < len; i++) {
@@ -457,6 +370,108 @@
               '<table class="diff">' + json.compare['*'] + '</table>';
         }
       }
+
+      (function init() {
+        var secondsSinceLastEdit =
+            document.querySelector('#secondsSinceLastEdit');
+        var secondsSinceLastEditValue =
+            document.querySelector('#secondsSinceLastEditValue');
+        secondsSinceLastEdit.addEventListener('change', function(e) {
+          secondsSinceLastEditValue.innerHTML = secondsSinceLastEdit.value;
+          socket.emit('secondsSinceLastEdit', {
+            value: secondsSinceLastEdit.value
+          });
+        }, false);
+
+        var secondsBetweenEdits =
+            document.querySelector('#secondsBetweenEdits');
+        var secondsBetweenEditsValue =
+            document.querySelector('#secondsBetweenEditsValue');
+        secondsBetweenEdits.addEventListener('change', function(e) {
+          secondsBetweenEditsValue.innerHTML = secondsBetweenEdits.value;
+          socket.emit('secondsBetweenEdits', {
+            value: secondsBetweenEdits.value
+          });
+        }, false);
+
+        var numberOfConcurrentEditors =
+            document.querySelector('#numberOfConcurrentEditors');
+        var numberOfConcurrentEditorsValue =
+            document.querySelector('#numberOfConcurrentEditorsValue');
+        numberOfConcurrentEditors.addEventListener('change', function(e) {
+          numberOfConcurrentEditorsValue.innerHTML =
+              numberOfConcurrentEditors.value;
+          socket.emit('numberOfConcurrentEditors', {
+            value: numberOfConcurrentEditors.value
+          });
+        }, false);
+
+        var breakingNewsThreshold =
+            document.querySelector('#breakingNewsThreshold');
+        var breakingNewsThresholdValue =
+            document.querySelector('#breakingNewsThresholdValue');
+        breakingNewsThreshold.addEventListener('change', function(e) {
+          breakingNewsThresholdValue.innerHTML = breakingNewsThreshold.value;
+          socket.emit('breakingNewsThreshold', {
+            value: breakingNewsThreshold.value
+          });
+        }, false);
+
+        var settingsLink = document.querySelector('#settings-link');
+        settingsLink.addEventListener('click', function(e) {
+          var settingsContainer = document.querySelector('#settings-container');
+          settingsContainer.style.display = 'block';
+        }, false);
+
+        var settingsCloseLink = document.querySelector('#settings-close-link');
+        settingsCloseLink.addEventListener('click', function(e) {
+          this.parentNode.style.display = 'none';
+        }, false);
+      
+        var socket = io.connect('http://localhost:8080');
+
+        socket.on('defaultSettings', function(data) {
+          document.querySelector('#secondsSinceLastEdit')
+          .value = data.secondsSinceLastEdit;
+          document.querySelector('#secondsSinceLastEditValue')
+          .innerHTML = data.secondsSinceLastEdit;
+
+          document.querySelector('#secondsBetweenEdits')
+          .value = data.secondsBetweenEdits;
+          document.querySelector('#secondsBetweenEditsValue')
+          .innerHTML = data.secondsBetweenEdits;
+
+          document.querySelector('#breakingNewsThreshold')
+          .value = data.breakingNewsThreshold;
+          document.querySelector('#breakingNewsThresholdValue')
+          .innerHTML = data.breakingNewsThreshold;
+
+          document.querySelector('#numberOfConcurrentEditors')
+          .value = data.numberOfConcurrentEditors;
+          document.querySelector('#numberOfConcurrentEditorsValue')
+          .innerHTML = data.numberOfConcurrentEditors;
+        });
+
+        socket.on('firstTimeSeen', function(data) {
+          logFirstTimeSeen(data);
+        });
+
+        socket.on('merging', function(data) {
+          logMerging(data);
+        });
+
+        socket.on('nTimesSeen', function(data) {
+          logNTimesSeen(data);
+        });
+
+        socket.on('breakingNewsCandidate', function(data) {
+          logBreakingNewsCandidate(data);
+        });
+
+        socket.on('stats', function(data) {
+          logStats(data);
+        });
+      })();
 
     </script>
   </body>

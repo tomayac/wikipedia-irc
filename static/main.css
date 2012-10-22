@@ -72,6 +72,14 @@ SMALL.hint {
 
 DIV.settings-container {
   display: none;
+  position: absolute;
+  left: 2em;
+  top: 2em;
+  z-index: 1000;
+  background-color: white;
+  padding: 0.5em;
+  border: solid black 2px;
+  border-radius: 5px;
 }
 
 DIV.settings {
@@ -90,6 +98,13 @@ SPAN.value {
 SPAN.new-page {
   color: white;
   background-color: blue;
+}
+
+A.settings {
+  position: absolute;
+  right: 1em;
+  text-decoration: none;
+  color: black;
 }
 
 /* this is the original CSS from Wikipedia: http://bits.wikimedia.org/zh.wikipedia.org/load.php?debug=false&lang=zh&modules=mediawiki.action.history.diff&only=styles&skin=vector&* */

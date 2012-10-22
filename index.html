@@ -341,10 +341,17 @@
               Object.keys(data.changes).slice(-5).map(function(timestamp) {
                 var humane = humaneDate(new Date(parseInt(timestamp, 10)));
                 var url = data.changes[timestamp].diffUrl;
-                return '<a class="changes" href="' + url + '">' + humane +
-                    '</a> ' + data.changes[timestamp].editor.split(':')[1] +
-                    ' (<b>' + data.changes[timestamp].language + '</b>, ' +
-                    data.changes[timestamp].delta + ')';
+                if (url) {
+                  return '<a class="changes" href="' + url + '">' + humane +
+                      '</a> ' + data.changes[timestamp].editor.split(':')[1] +
+                      ' (<b>' + data.changes[timestamp].language + '</b>, ' +
+                      data.changes[timestamp].delta + ')';
+                } else {
+                  return '<span class="new-page">newly created ' + humane +
+                      '</span> ' + data.changes[timestamp].editor.split(':')[1] +
+                      ' (<b>' + data.changes[timestamp].language + '</b>, ' +
+                      data.changes[timestamp].delta + ')';
+                }
               }).toString().replace(/,/g, ', ') +
               (socialHtml.indexOf('class="avatar"') !== -1 ?
                   '<br/><b>Social Network Opinions:</b>' + socialHtml : '') +

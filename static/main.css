@@ -70,9 +70,22 @@ SMALL.hint {
 
 }
 
+DIV.changes {
+  display: none;
+  position: fixed;
+  left: 2em;
+  top: 2em;
+  width: 50%;
+  z-index: 1000;
+  background-color: white;
+  padding: 0.5em;
+  border: solid black 2px;
+  border-radius: 5px;
+}
+
 DIV.settings-container {
   display: none;
-  position: absolute;
+  position: fixed;
   left: 2em;
   top: 2em;
   z-index: 1000;

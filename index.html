@@ -65,7 +65,7 @@
     <h2>Breaking News Candidate Article Clusters Right Now:</h2>
     <div id="breakingNewsCandidates"></div>
 
-    <div id="changes"></div>
+    <div class="changes" id="changes"><a id="changes-close-link" class="settings"><b>✗</b> Close</a><div></div></div>
 
     <hr size="1"/>
     <small>
@@ -366,7 +366,9 @@
 
       function outputChanges(json) {
         if (json && json.compare && json.compare['*']) {
-          document.querySelector('#changes').innerHTML =
+          var changesDiv = document.querySelector('#changes');
+          changesDiv.style.display = 'block';
+          changesDiv.childNodes[1].innerHTML =
               '<table class="diff">' + json.compare['*'] + '</table>';
         }
       }
@@ -427,7 +429,12 @@
         settingsCloseLink.addEventListener('click', function(e) {
           this.parentNode.style.display = 'none';
         }, false);
-      
+
+        var changesCloseLink = document.querySelector('#changes-close-link');
+        changesCloseLink.addEventListener('click', function(e) {
+          this.parentNode.style.display = 'none';
+        }, false);
+
         var socket = io.connect('http://localhost:8080');
 
         socket.on('defaultSettings', function(data) {

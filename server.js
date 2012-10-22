@@ -5,6 +5,7 @@ var http = require('http');
 var app = express();
 var server = http.createServer(app);
 var io = require('socket.io').listen(server);
+var socialNetworkSearch = require('./social-network-search.js');
 
 // verbous debug mode
 var VERBOUS = false;
@@ -312,34 +313,45 @@ function monitorWikipedia() {
           var numberOfEditorsReached =
               numberOfEditors >= NUMBER_OF_CONCURRENT_EDITORS;
 
-          io.sockets.emit('nTimesSeen', {
-            article: article,
-            occurrences: articles[article].occurrences,
-            timestamp: new Date(articles[article].timestamp),
-            editIntervals: articles[article].intervals,
-            editors: articles[article].editors,
-            languages: articles[article].languages,
-            versions: articles[article].versions,
-            changes: articles[article].changes,
-            conditions: {
-              breakingNewsThreshold: breakingNewsThresholdReached,
-              secondsBetweenEdits: allEditsInShortDistances,
-              numberOfConcurrentEditors: numberOfEditorsReached
+          // search for all article titles in social networks
+          var searchTerms = {};
+          searchTerms[article.split(':')[1].replace(/_/g, ' ')] = true;
+          for (var key in articles[article].versions) {
+            var articleTitle = key.split(':')[1].replace(/_/g, ' ');
+            if (!searchTerms[articleTitle]) {
+              searchTerms[articleTitle] = true;
             }
-          });
-          if (VERBOUS) {
-            console.log('[ ! ] ' + articles[article].occurrences + ' ' +
-                'times seen: "' + article + '". ' +
-                'Timestamp: ' + new Date(articles[article].timestamp) + '. ' +
-                'Edit intervals: ' + articles[article].intervals.toString()
-                .replace(/(\d+),?/g, '$1ms ').trim() + '. ' +
-                'Parallel editors: ' + articles[article].editors.length + '. ' +
-                'Editors: ' + articles[article].editors + '. ' +
-                'Languages: ' + JSON.stringify(articles[article].languages));
           }
-          if (breakingNewsThresholdReached) {
-            // check if at least two editors made edits at roughly the same time
-            if ((allEditsInShortDistances) &&
+          socialNetworkSearch(searchTerms, function(socialNetworksResults) {
+            io.sockets.emit('nTimesSeen', {
+              article: article,
+              occurrences: articles[article].occurrences,
+              timestamp: new Date(articles[article].timestamp),
+              editIntervals: articles[article].intervals,
+              editors: articles[article].editors,
+              languages: articles[article].languages,
+              versions: articles[article].versions,
+              changes: articles[article].changes,
+              conditions: {
+                breakingNewsThreshold: breakingNewsThresholdReached,
+                secondsBetweenEdits: allEditsInShortDistances,
+                numberOfConcurrentEditors: numberOfEditorsReached
+              },
+              socialNetworksResults: socialNetworksResults
+            });
+            if (VERBOUS) {
+              console.log('[ ! ] ' + articles[article].occurrences + ' ' +
+                  'times seen: "' + article + '". ' +
+                  'Timestamp: ' + new Date(articles[article].timestamp) +
+                  '. Edit intervals: ' + articles[article].intervals.toString()
+                  .replace(/(\d+),?/g, '$1ms ').trim() + '. ' +
+                  'Parallel editors: ' + articles[article].editors.length +
+                  '. Editors: ' + articles[article].editors + '. ' +
+                  'Languages: ' + JSON.stringify(articles[article].languages));
+            }
+            // check if all three breaking news conditions are fulfilled at once
+            if ((breakingNewsThresholdReached) &&
+                (allEditsInShortDistances) &&
                 (numberOfEditorsReached)) {
               io.sockets.emit('breakingNewsCandidate', {
                 article: article,
@@ -354,7 +366,8 @@ function monitorWikipedia() {
                   breakingNewsThreshold: breakingNewsThresholdReached,
                   secondsBetweenEdits: allEditsInShortDistances,
                   numberOfConcurrentEditors: numberOfEditorsReached
-                }
+                },
+                socialNetworksResults: socialNetworksResults
               });
               if (VERBOUS) {
                 console.log('[ ★ ] Breaking news candidate: "' +
@@ -372,18 +385,10 @@ function monitorWikipedia() {
                     JSON.stringify(articles[article].languages));
               }
             }
-          }
+          });
         }
       }
     }
-    /*
-    console.log('#### Articles #####');
-    console.log(articles);
-    console.log('****** Clusters ******');
-    console.log(articleClusters);
-    console.log('%%%%%%% Versions %%%%%%%');
-    console.log(articleVersionsMap);
-    */
   });
 }
 

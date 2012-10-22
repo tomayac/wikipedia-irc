@@ -14,14 +14,32 @@ H2 {
 }
 
 LI {
-  margin-bottom: 1em;
   list-style-type: none;
+}
+
+LI.article-cluster {
+  margin-bottom: 2em;
+  background-color: #EEF3E2;
+  border: solid 1px #458B74;
+  padding: 0.5em;
 }
 
 A.title {
   color: darkgreen;
   text-decoration: none;
   line-height: 1.5em;
+}
+
+UL.social-network-results {
+  margin-left: 2em;
+  background-color: #FFFFF2;
+}
+
+IMG.avatar {
+  width: 16px;
+  height: 16px;
+  border-radius: 5px;
+  vertical-align: middle;
 }
 
 SPAN.condition {

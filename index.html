@@ -209,10 +209,9 @@
         }
         firstTimeSeen.innerHTML +=
             '<li>' +
-              '<strong class="title">' + linkifyTitle(data.article) + '</strong> ' +
-              '(' + humaneDate(data.timestamp) + ')' +
-              '<br/><b>Editor:</b> ' + data.editors.map(linkifyEditor) + ' ' +
-              '<b>Language:</b> ' + Object.keys(data.languages) +
+              '<strong class="title">' + linkifyTitle(data.article) +
+              '</strong> (' + humaneDate(data.timestamp) + ')' +
+              '<br/><b>Editor:</b> ' + data.editors.map(linkifyEditor) +
             '</li>';
       }
 
@@ -254,8 +253,60 @@
           versionsHtml += (i > 1 ? ', ' : '') +
               linkifyTitle(versions[languagesArray[i].language]);
         }
+        var socialHtml = '<ul class="social-network-results">';
+        var now = new Date().getTime();
+        for (var term in data.socialNetworksResults) {
+          var resultsExistForTerm = false;
+          for (var network in data.socialNetworksResults[term]) {
+            if (Array.isArray(data.socialNetworksResults[term][network])) {
+              resultsExistForTerm = true;
+              break;
+            }
+          }
+          if (resultsExistForTerm) {
+            socialHtml += '<li><small><b>' + term + '</b></small>';
+          }
+          for (var network in data.socialNetworksResults[term]) {
+            if (Array.isArray(data.socialNetworksResults[term][network])) {
+              data.socialNetworksResults[term][network].forEach(function(item) {
+                // not older than 1h: 1 * 60 * 60 * 1000 = 3600000
+                if (now - item.timestamp < 3600000) {
+                  var micropost = item.micropost;
+                  if (micropost.length > 140) {
+                    var firstPart = micropost.substring(0, 140);
+                    var expandPart = micropost.substr(140).split(/\s/);
+                    var secondPart = expandPart[0];
+                    expandPart = expandPart.slice(1).join(' ');
+                    micropost = firstPart + secondPart;                
+                    if (expandPart) {
+                      expandPart = expandPart.replace(/'/g, "\\'");
+                      expandPart = expandPart.replace(/"/g, '&quot;');
+                      micropost +=
+                          ' <span onclick="javascript:this.innerHTML = \'' +
+                          expandPart + '\'">[<span style="color:blue;">…' +
+                          '</span>]</span>';
+                    }
+                  }                
+                  socialHtml += '<br/><img class="avatar" src="' + item.avatar +
+                      '"/> <img class="avatar" src="' +
+                      network.toLowerCase() + '.png"/> <small><a href="' +
+                      item.profileLink + '">' +
+                      item.user + '</a> (<a href="' + item.deepLink + '">' +
+                      humaneDate(item.creationDate) +
+                      '</a>): ' + micropost.replace(
+                          new RegExp('(' + term + ')', 'gi'),
+                          '<span style="background-color: yellow;">$1</span>') +
+                      '</small>';
+                }
+              });
+            }
+          }
+          socialHtml += '</li>';
+        }
+        socialHtml += '</ul>';
+        
         var html =
-            '<li>' +
+            '<li class="article-cluster">' +
               '<strong class="' + (isBreakingNews ? 'breaking' : '') + '">' +
               linkifyTitle(versions[languagesArray[0].language]) +
               '</strong> (' + humaneDate(data.timestamp) + ')' +
@@ -295,6 +346,8 @@
                     ' (<b>' + data.changes[timestamp].language + '</b>, ' +
                     data.changes[timestamp].delta + ')';
               }).toString().replace(/,/g, ', ') +
+              (socialHtml.indexOf('class="avatar"') !== -1 ?
+                  '<br/><b>Social Network Opinions:</b>' + socialHtml : '') +
             '</li>';
         return html;
       }

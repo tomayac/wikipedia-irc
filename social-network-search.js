@@ -90,7 +90,7 @@ var socialNetworkSearch = function(terms, callback) {
             result.id_str;
         var profileLink = 'https://twitter.com/' + user;
         curatedResults.push({
-          user: user,
+          user: '@' + user,
           micropost: micropost,
           avatar: avatar,
           creationDate: creationDate,

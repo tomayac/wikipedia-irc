@@ -1,7 +1,7 @@
 <html>
   <head>
     <title>Wikipedia Live Monitor</title>
-    <script src="http://localhost:8080/socket.io/socket.io.js"></script>
+    <script src="http://172.16.106.82:8080/socket.io/socket.io.js"></script>
     <script src="humane.js"></script>
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
     <link rel="stylesheet" href="main.css" />
@@ -20,7 +20,7 @@
       </div>
 
       <div class="settings">
-        <input id="secondsBetweenEdits" type="range" min="10" max="120" step="10" />
+        <input id="secondsBetweenEdits" type="range" min="10" max="240" step="10" />
         <span class="value" id="secondsBetweenEditsValue"></span>
         <label for="secondsBetweenEdits">Seconds Between Edits</label>
         <br/>
@@ -87,9 +87,9 @@
         .innerHTML = 240;
 
         document.querySelector('#secondsBetweenEdits')
-        .value = 60;
+        .value = 120;
         document.querySelector('#secondsBetweenEditsValue')
-        .innerHTML = 60;
+        .innerHTML = 120;
 
         document.querySelector('#breakingNewsThreshold')
         .value = 5;
@@ -378,7 +378,7 @@
             data.clustersLeft;
       }
 
-      var socket = io.connect('http://localhost:8080');
+      var socket = io.connect('http://172.16.106.82:8080');
 
       socket.on('defaultSettings', function(data) {
         document.querySelector('#secondsSinceLastEdit')

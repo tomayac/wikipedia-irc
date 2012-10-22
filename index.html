@@ -1,7 +1,7 @@
 <html>
   <head>
     <title>Wikipedia Live Monitor</title>
-    <script src="http://172.16.106.82:8080/socket.io/socket.io.js"></script>
+    <script src="./socket.io/socket.io.js"></script>
     <script src="humane.js"></script>
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
     <link rel="stylesheet" href="main.css" />
@@ -87,9 +87,9 @@
         .innerHTML = 240;
 
         document.querySelector('#secondsBetweenEdits')
-        .value = 120;
+        .value = 60;
         document.querySelector('#secondsBetweenEditsValue')
-        .innerHTML = 120;
+        .innerHTML = 60;
 
         document.querySelector('#breakingNewsThreshold')
         .value = 5;
@@ -378,7 +378,7 @@
             data.clustersLeft;
       }
 
-      var socket = io.connect('http://172.16.106.82:8080');
+      var socket = io.connect('http://localhost:8080');
 
       socket.on('defaultSettings', function(data) {
         document.querySelector('#secondsSinceLastEdit')
@@ -446,7 +446,8 @@
 
       function outputChanges(json) {
         if (json && json.compare && json.compare['*']) {
-          document.querySelector('#changes').innerHTML = json.compare['*'];
+          document.querySelector('#changes').innerHTML =
+              '<table class="diff">' + json.compare['*'] + '</table>';
         }
       }
 

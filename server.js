@@ -25,7 +25,7 @@ var SECONDS_SINCE_LAST_EDIT = 240;
 
 // an article cluster may have at max SECONDS_BETWEEN_EDITS seconds in between
 // edits in order to be regarded a breaking news candidate
-var SECONDS_BETWEEN_EDITS = 120;
+var SECONDS_BETWEEN_EDITS = 60;
 
 // an article cluster must have at least BREAKING_NEWS_THRESHOLD edits before it
 // is considered a breaking news candidate

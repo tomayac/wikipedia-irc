@@ -10,7 +10,7 @@
     <a id="settings-link" class="settings"><b>⚙</b> Settings</a>
     <h1>Wikipedia Live Monitor</h1>
     <div id="settings-container" class="settings-container">
-      <a id="settings-close-link" class="settings"><b>✓</b> Close and Save</a>
+      <a id="settings-close-link" class="settings"><b style="color:green;">✓</b> Save and Close</a>
       <h2>Settings</h2>
       <div class="settings">
         <input id="breakingNewsThreshold" type="range" min="1" max="10" step="1" />
@@ -53,19 +53,26 @@
       </div>
     </div>
 
-    <h2>Articles Edited Right Now:</h2>
-    <div id="firstTimeSeen"></div>
-
-    <h2>Merging Right Now:</h2>
-    <div id="merging"></div>
+    <table style="width:100%;">
+      <tr>
+        <td style="width:50%; vertical-align:top;">
+          <h2>Articles Edited Right Now:</h2>
+          <div id="firstTimeSeen"></div>
+        </td>
+        <td style="width:50%; vertical-align:top;">
+          <h2>Merging Right Now:</h2>
+          <div id="merging"><li class="article-cluster">None yet.<br/><b>Monitoring…</b></li></div>
+        </td>
+      </tr>
+    </table>
 
     <h2>Article Clusters Repeatedly Edited In Short Intervals:</h2>
-    <div id="nTimesSeen"></div>
+    <div id="nTimesSeen"><li class="article-cluster">None yet.<br/><b>Monitoring…</b></li></div>
 
     <h2>Breaking News Candidate Article Clusters Right Now:</h2>
-    <div id="breakingNewsCandidates"></div>
+    <div id="breakingNewsCandidates"><li class="article-cluster">None yet.<br/><b>Monitoring…</b></li></div>
 
-    <div class="changes" id="changes"><a id="changes-close-link" class="settings"><b>✗</b> Close</a><div></div></div>
+    <div class="changes" id="changes"><a id="changes-close-link" class="settings"><b style="color:red;">✗</b> Close</a><div></div></div>
 
     <hr size="1"/>
     <small>
@@ -165,7 +172,7 @@
           firstTimeSeen.removeChild(firstTimeSeen.firstChild);
         }
         firstTimeSeen.innerHTML +=
-            '<li>' +
+            '<li class="article-cluster">' +
               '<strong class="title">' + linkifyTitle(data.article) +
               '</strong> (' + humaneDate(data.timestamp) + ')' +
               '<br/><b>Editor:</b> ' + data.editors.map(linkifyEditor) +
@@ -178,7 +185,7 @@
           merging.removeChild(merging.firstChild);
         }
         merging.innerHTML +=
-            '<li>' +
+            '<li class="article-cluster">' +
               '<strong>' + linkifyTitle(data.current) + '</strong> with ' +
               '<strong>' + linkifyTitle(data.existing) + '</strong> ' +
               '(' + humaneDate(data.timestamp) + ')' +

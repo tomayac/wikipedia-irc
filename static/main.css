@@ -13,8 +13,11 @@ H2 {
   text-shadow: 1px 1px 1px darkgray;
 }
 
-LI.article-cluster {
+LI {
   list-style-type: none;
+}
+
+LI.article-cluster {
   margin-bottom: 1em;
   background-color: #EEF3E2;
   border: solid 1px #458B74;

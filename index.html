@@ -61,7 +61,7 @@
         </td>
         <td style="width:50%; vertical-align:top;">
           <h2>Merging Right Now:</h2>
-          <div id="merging"><li class="article-cluster">None yet.<br/><b>Monitoring…</b></li></div>
+          <div id="merging"><li style="height:3em;" class="article-cluster">None yet.<br/><b>Monitoring…</b></li></div>
         </td>
       </tr>
     </table>
@@ -172,7 +172,7 @@
           firstTimeSeen.removeChild(firstTimeSeen.firstChild);
         }
         firstTimeSeen.innerHTML +=
-            '<li class="article-cluster">' +
+            '<li style="height:3em;" class="article-cluster">' +
               '<strong class="title">' + linkifyTitle(data.article) +
               '</strong> (' + humaneDate(data.timestamp) + ')' +
               '<br/><b>Editor:</b> ' + data.editors.map(linkifyEditor) +
@@ -185,7 +185,7 @@
           merging.removeChild(merging.firstChild);
         }
         merging.innerHTML +=
-            '<li class="article-cluster">' +
+            '<li style="height:3em;" class="article-cluster">' +
               '<strong>' + linkifyTitle(data.current) + '</strong> with ' +
               '<strong>' + linkifyTitle(data.existing) + '</strong> ' +
               '(' + humaneDate(data.timestamp) + ')' +

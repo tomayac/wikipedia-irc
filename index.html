@@ -255,10 +255,10 @@
                   var micropost = item.micropost;
                   if (micropost.length > 140) {
                     var firstPart = micropost.substring(0, 140);
-                    var expandPart = micropost.substr(140).split(/\s/);
+                    var expandPart = micropost.substr(140).split(/\s+/);
                     var secondPart = expandPart[0];
                     expandPart = expandPart.slice(1).join(' ');
-                    micropost = firstPart + secondPart;                
+                    micropost = firstPart + secondPart;
                     if (expandPart) {
                       expandPart = expandPart.replace(/'/g, "\\'");
                       expandPart = expandPart.replace(/"/g, '&quot;');
@@ -285,7 +285,7 @@
           socialHtml += '</li>';
         }
         socialHtml += '</ul>';
-        
+
         var html =
             '<li class="article-cluster">' +
               '<strong class="' + (isBreakingNews ? 'breaking' : '') + '">' +

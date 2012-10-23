@@ -120,6 +120,7 @@ A.settings {
   right: 1em;
   text-decoration: none;
   color: black;
+  cursor: pointer;
 }
 
 /* this is the original CSS from Wikipedia: http://bits.wikimedia.org/zh.wikipedia.org/load.php?debug=false&lang=zh&modules=mediawiki.action.history.diff&only=styles&skin=vector&* */

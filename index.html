@@ -61,16 +61,16 @@
         </td>
         <td style="width:50%; vertical-align:top;">
           <h2>Merging Right Now:</h2>
-          <div id="merging"><li style="height:3em;" class="article-cluster">None yet.<br/><b>Monitoring…</b></li></div>
+          <div id="merging"><li style="height:3em;" class="none-yet article-cluster">None yet.<br/><b>Monitoring…</b></li></div>
         </td>
       </tr>
     </table>
 
     <h2>Article Clusters Repeatedly Edited In Short Intervals:</h2>
-    <div id="nTimesSeen"><li class="article-cluster">None yet.<br/><b>Monitoring…</b></li></div>
+    <div id="nTimesSeen"><li class="none-yet article-cluster">None yet.<br/><b>Monitoring…</b></li></div>
 
     <h2>Breaking News Candidate Article Clusters Right Now:</h2>
-    <div id="breakingNewsCandidates"><li class="article-cluster">None yet.<br/><b>Monitoring…</b></li></div>
+    <div id="breakingNewsCandidates"><li class="none-yet article-cluster">None yet.<br/><b>Monitoring…</b></li></div>
 
     <div class="changes" id="changes"><a id="changes-close-link" class="settings"><b style="color:red;">✗</b> Close</a><div></div></div>
 
@@ -345,6 +345,9 @@
         if (nTimesSeen.childNodes.length >= 3) {
           nTimesSeen.removeChild(nTimesSeen.firstChild);
         }
+        if (nTimesSeen.querySelector('.none-yet')) {
+          nTimesSeen.removeChild(nTimesSeen.querySelector('.none-yet'));
+        }
         nTimesSeen.innerHTML += generateLogMessage(data, false);
         attachClickHandler();
       }
@@ -354,6 +357,10 @@
             document.querySelector('#breakingNewsCandidates');
         if (breakingNewsCandidate.childNodes.length >= 3) {
           breakingNewsCandidate.removeChild(breakingNewsCandidate.firstChild);
+        }
+        if (breakingNewsCandidate.querySelector('.none-yet')) {
+          breakingNewsCandidate.removeChild(
+              breakingNewsCandidate.querySelector('.none-yet'));
         }
         breakingNewsCandidate.innerHTML += generateLogMessage(data, true);
         attachClickHandler();

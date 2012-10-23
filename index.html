@@ -172,7 +172,7 @@
           firstTimeSeen.removeChild(firstTimeSeen.firstChild);
         }
         firstTimeSeen.innerHTML +=
-            '<li style="height:3em;" class="article-cluster">' +
+            '<li style="overflow:hidden;height:3em;" class="article-cluster">' +
               '<strong class="title">' + linkifyTitle(data.article) +
               '</strong> (' + humaneDate(data.timestamp) + ')' +
               '<br/><b>Editor:</b> ' + data.editors.map(linkifyEditor) +
@@ -185,7 +185,7 @@
           merging.removeChild(merging.firstChild);
         }
         merging.innerHTML +=
-            '<li style="height:3em;" class="article-cluster">' +
+            '<li style="overflow:hidden;height:3em;" class="article-cluster">' +
               '<strong>' + linkifyTitle(data.current) + '</strong> with ' +
               '<strong>' + linkifyTitle(data.existing) + '</strong> ' +
               '(' + humaneDate(data.timestamp) + ')' +
@@ -310,7 +310,7 @@
                   '<span class="condition-false">✗</span>') +
               '</span><br/><b>Last Edit Intervals:</b> ' +
               data.editIntervals.slice(-4).map(function(interval) {
-                return ~~(interval / 1000) + 'sec';
+                return ~~(interval / 1000) + ' seconds';
               }).toString().replace(/,/g, ', ') +
               '<br/><b>Occurrences:</b> ' + data.occurrences +
               '<br/><b>Editors</b> (' + data.editors.length + '): ' +

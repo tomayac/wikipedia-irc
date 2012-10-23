@@ -66,16 +66,12 @@ A.user {
   line-height: 1.5em;
 }
 
-SMALL.hint {
-
-}
-
 DIV.changes {
   display: none;
   position: fixed;
   left: 2em;
   top: 2em;
-  width: 800px;
+  width: 600px;
   height: 600px;
   overflow: auto;
   z-index: 1000;
@@ -120,6 +116,7 @@ A.settings {
   right: 1em;
   text-decoration: none;
   color: black;
+  background-color: white;
   cursor: pointer;
 }
 

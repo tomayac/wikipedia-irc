@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="main.css" />
   </head>
   <body>
+    <a class="about" target="_blank" href="https://docs.google.com/a/google.com/presentation/d/1F3p7Cf_XU8uieOzJGnhRg5bQdl57WR1IZzOHJbhNAvg/present#slide=id.i0">About this project</a>
     <a id="settings-link" class="settings"><b>⚙</b> Settings</a>
     <h1>Wikipedia Live Monitor</h1>
     <div id="settings-container" class="settings-container">
@@ -466,7 +467,7 @@
           this.parentNode.style.display = 'none';
         }, false);
 
-        var socket = io.connect('http://localhost:8080');
+        var socket = io.connect('http://jimmywales.i:8080');
 
         socket.on('defaultSettings', function(data) {
           document.querySelector('#secondsSinceLastEdit')

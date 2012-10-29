@@ -146,7 +146,7 @@ var socialNetworkSearch = function(terms, callback) {
               if (attachment.displayName) {
                 micropost += ' ' + attachment.displayName;
               }
-              if ((attachment.embed.url) &&
+              if ((attachment.embed) && (attachment.embed.url) &&
                   (micropost.indexOf(attachment.embed.url) === -1)) {
                 micropost += ' ' + attachment.embed.url;
               }

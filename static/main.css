@@ -111,6 +111,12 @@ SPAN.new-page {
   background-color: blue;
 }
 
+A.about {
+  color: red;
+  position:absolute;
+  right: 7em;
+}
+
 A.settings {
   position: absolute;
   right: 1em;

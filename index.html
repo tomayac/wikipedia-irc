@@ -238,11 +238,17 @@
         var socialHtml = '<ul class="social-network-results">';
         var now = new Date().getTime();
         for (var term in data.socialNetworksResults) {
+          // only append the term if microposts exist. need to iterate over all
+          // networks and check the freshness. ugly, but works.
           var resultsExistForTerm = false;
           for (var network in data.socialNetworksResults[term]) {
             if (Array.isArray(data.socialNetworksResults[term][network])) {
-              resultsExistForTerm = true;
-              break;
+              data.socialNetworksResults[term][network].forEach(function(item) {
+                // not older than 1h: 1 * 60 * 60 * 1000 = 3600000
+                if (now - item.timestamp < 3600000) {
+                  resultsExistForTerm = true;
+                }
+              });
             }
           }
           if (resultsExistForTerm) {

@@ -1,0 +1,160 @@
+\documentclass{sig-alternate}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[T1,T2A]{fontenc}
+\usepackage{lmodern}
+\usepackage[activate=compatibility]{microtype}
+
+% autoref command
+\usepackage[hyphens]{url}
+\usepackage[pdftex,urlcolor=black,colorlinks=true,linkcolor=black,citecolor=black]{hyperref}
+\def\sectionautorefname{Section}
+\def\subsectionautorefname{Subsection}
+
+\usepackage{enumitem}
+
+% todo macro
+\usepackage{color}
+\newcommand{\todo}[1]{\noindent\textcolor{red}{{\bf \{TODO}: #1{\bf \}}}}
+
+% listings and Verbatim environment
+\usepackage{fancyvrb}
+\usepackage{relsize}
+\usepackage{listings}
+\usepackage{verbatim}
+\newcommand{\defaultlistingsize}{\fontsize{7.5pt}{9.5pt}}
+\newcommand{\inlinelistingsize}{\fontsize{8pt}{11pt}}
+\newcommand{\smalllistingsize}{\fontsize{7.5pt}{9.5pt}}
+\newcommand{\listingsize}{\defaultlistingsize}
+\RecustomVerbatimCommand{\Verb}{Verb}{fontsize=\inlinelistingsize}
+\RecustomVerbatimEnvironment{Verbatim}{Verbatim}{fontsize=\defaultlistingsize}
+\lstset{frame=lines,captionpos=b,numberbychapter=false,escapechar=§,
+        aboveskip=0.5em,belowskip=0em,abovecaptionskip=0em,belowcaptionskip=0em,
+framexbottommargin=-1em,
+        basicstyle=\ttfamily\listingsize\selectfont}
+
+% use Courier from this point onward
+\let\oldttdefault\ttdefault
+\renewcommand{\ttdefault}{pcr}
+\let\oldurl\url
+\renewcommand{\url}[1]{\inlinelistingsize\oldurl{#1}}
+
+\lstdefinelanguage{JavaScript}{
+  keywords={push, typeof, new, true, false, catch, function, return, null, catch, switch, var, if, in, while, do, else, case, break},
+  keywordstyle=\bfseries,
+  ndkeywords={class, export, boolean, throw, implements, import, this},
+  ndkeywordstyle=\color{darkgray}\bfseries,
+  identifierstyle=\color{black},
+  sensitive=false,
+  comment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{darkgray},
+  stringstyle=\color{red},
+  morestring=[b]',
+  morestring=[b]"
+}
+
+% linewrap symbol
+\definecolor{grey}{RGB}{130,130,130}
+\newcommand{\linewrap}{\raisebox{-.6ex}{\textcolor{grey}{$\hookleftarrow$}}}
+
+% more pleasing quote environment
+\usepackage{tikz}
+\newcommand*{\openquote}{\tikz[remember picture,overlay,xshift=-7pt,yshift=1pt]
+     \node (OQ) {\fontfamily{fxl}\fontsize{16}{16}\selectfont``};\kern0pt}
+\newcommand*{\closequote}{\tikz[remember picture,overlay,xshift=2pt,yshift=-4.5pt]
+     \node (CQ) {\fontfamily{fxl}\fontsize{16}{16}\selectfont''};}
+\renewenvironment{quote}%
+{\setlength{\parindent}{1cm}\par\openquote}
+{\closequote\vspace{-4.5pt}
+}
+
+% bullet numbers
+\usepackage{tkz-graph}
+\usetikzlibrary{matrix,arrows,decorations.pathmorphing,shapes}
+\newcommand{\dobulletnumber}[1]{\node[circle,text=white,fill=gray,anchor=west,inner sep=1pt] {\sffamily #1}}
+\newcommand{\bulletnumber}[1]{\tikz[baseline=-2.5,overlay]\dobulletnumber{#1};}
+\newcommand{\bulletref}[1]{\tikz[baseline=-2.5]\dobulletnumber{\fontsize{8}{8}\selectfont#1};}
+
+\hyphenation{DBpedia RESTdesc}
+
+%\def\baselinestretch{0.99}
+
+\begin{document}
+
+\title{MJ no more: using concurrent Wikipedia edit spikes with social network plausibility checks to detect breaking news}
+
+\numberofauthors{1}\author{
+\alignauthor
+Thomas Steiner\\
+	\affaddr{Google Germany GmbH}\\
+	\affaddr{ABC-Str. 19}\\
+	\affaddr{20354 Hamburg, Germany}\\
+	\email{tomac@google.com}
+}
+\maketitle
+\begin{abstract}
+\fontencoding{T1}\selectfont
+We have developed an application called Wikipedia Live Monitor
+that monitors edits on different language versions of Wikipedia---%
+as they happen in realtime.
+Wikipedia articles in different languages are highly interlinked.
+For example, the English article \emph{``en:2013\_Russian\_meteor\_event''}
+on the topic of the February 15 meteoroid
+that exploded over the region of Chelyabinsk Oblast, Russia,
+is interlinked with \fontencoding{T2A}\selectfont
+\emph{``ru:Падение\_метеорита\_на\_Урале\_в\_2013\_году''},
+\fontencoding{T1}\selectfont \emph{i.e.},
+the Russian article on the same topic.
+As we monitor multiple language versions of Wikipedia in parallel,
+we can exploit this fact to detect \emph{concurrent edit spikes}
+of Wikipedia articles covering the same topics,
+both in only one and in different languages.
+We treat such concurrent edit spikes as signals
+for potential breaking news events, whose plausibility we then check 
+with full-text cross-language searches on multiple social networks.
+Unlike the opposite approach of monitoring social networks first
+and potentially checking plausibility on Wikipedia second,
+the approach proposed in this paper has the advantage of
+being less prone to false-positive alerts while being equally sensitive
+to true-positive events, however, at a~fraction of the processing cost.
+
+\end{abstract}
+
+\category{I.2.10}{Vision and Scene Understanding}{Video analysis} 
+\category{H.5.1}{Multimedia Information Systems}{Video (e.g., tape, disk, DVI)}
+
+\terms{Algorithms}
+
+\keywords{}
+
+\section{Introduction}
+
+
+
+\cite{petrovic2010streamingfirststory}
+
+\cite{osborne2012bieber}
+
+\footnote{Raw IRC feeds of recent changes \url{http://meta.wikimedia.org/wiki/IRC/Channels\#Raw_feeds}, accessed 02/18/2013}
+\footnote{Page view statistics for Wikimedia projects \url{http://dumps.wikimedia.org/other/pagecounts-raw/}, accessed 02/18/2013}
+
+
+1) >= 5 Occurrences 
+An article cluster must have at least n edits before it is considered a breaking news candidate.
+
+2) <=60 Seconds Between Edits 
+An article cluster may have at max n seconds in between edits in order to be regarded a breaking news candidate.
+
+3) >=2 Concurrent Editors
+An article cluster must be edited by at least n concurrent editors before it is considered a breaking news candidate.
+
+4) <=240 Seconds Since Last Edit 
+An article cluster is thrown out of the monitoring loop if its last edit is longer ago than n seconds.
+
+\bibliographystyle{abbrv}
+\bibliography{www2013devtrack}
+
+\balancecolumns
+\end{document}

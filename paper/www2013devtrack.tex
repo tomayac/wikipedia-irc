@@ -59,31 +59,20 @@ framexbottommargin=-1em,
 \definecolor{grey}{RGB}{130,130,130}
 \newcommand{\linewrap}{\raisebox{-.6ex}{\textcolor{grey}{$\hookleftarrow$}}}
 
-% more pleasing quote environment
-\usepackage{tikz}
-\newcommand*{\openquote}{\tikz[remember picture,overlay,xshift=-7pt,yshift=1pt]
-     \node (OQ) {\fontfamily{fxl}\fontsize{16}{16}\selectfont``};\kern0pt}
-\newcommand*{\closequote}{\tikz[remember picture,overlay,xshift=2pt,yshift=-4.5pt]
-     \node (CQ) {\fontfamily{fxl}\fontsize{16}{16}\selectfont''};}
-\renewenvironment{quote}%
-{\setlength{\parindent}{1cm}\par\openquote}
-{\closequote\vspace{-4.5pt}
-}
-
-% bullet numbers
-\usepackage{tkz-graph}
-\usetikzlibrary{matrix,arrows,decorations.pathmorphing,shapes}
-\newcommand{\dobulletnumber}[1]{\node[circle,text=white,fill=gray,anchor=west,inner sep=1pt] {\sffamily #1}}
-\newcommand{\bulletnumber}[1]{\tikz[baseline=-2.5,overlay]\dobulletnumber{#1};}
-\newcommand{\bulletref}[1]{\tikz[baseline=-2.5]\dobulletnumber{\fontsize{8}{8}\selectfont#1};}
-
-\hyphenation{DBpedia RESTdesc}
+\hyphenation{}
 
 %\def\baselinestretch{0.99}
 
 \begin{document}
 
-\title{MJ no more: using concurrent Wikipedia edit spikes with social network plausibility checks to detect breaking news}
+% --- Author Metadata here ---
+\conferenceinfo{World Wide Web Conference}{'13 Rio de Janeiro, Brazil}
+\CopyrightYear{2013} % Allows default copyright year (20XX) to be over-ridden - IF NEED BE.
+%\crdata{0-12345-67-8/90/01}  % Allows default copyright data (0-89791-88-6/97/05) to be over-ridden - IF NEED BE.
+% --- End of Author Metadata ---
+
+
+\title{MJ no more: Using Concurrent Wikipedia Edit Spikes\\ with Social Network Plausibility Checks\\ to Detect Breaking News}
 
 \numberofauthors{1}\author{
 \alignauthor
@@ -97,7 +86,7 @@ Thomas Steiner\\
 \begin{abstract}
 \fontencoding{T1}\selectfont
 We have developed an application called Wikipedia Live Monitor
-that monitors edits on different language versions of Wikipedia---%
+that monitors article edits on different language versions of Wikipedia---%
 as they happen in realtime.
 Wikipedia articles in different languages are highly interlinked.
 For example, the English article \emph{``en:2013\_Russian\_meteor\_event''}
@@ -105,7 +94,7 @@ on the topic of the February 15 meteoroid
 that exploded over the region of Chelyabinsk Oblast, Russia,
 is interlinked with \fontencoding{T2A}\selectfont
 \emph{``ru:Падение\_метеорита\_на\_Урале\_в\_2013\_году''},
-\fontencoding{T1}\selectfont \emph{i.e.},
+\fontencoding{T1}\selectfont
 the Russian article on the same topic.
 As we monitor multiple language versions of Wikipedia in parallel,
 we can exploit this fact to detect \emph{concurrent edit spikes}
@@ -114,19 +103,20 @@ both in only one and in different languages.
 We treat such concurrent edit spikes as signals
 for potential breaking news events, whose plausibility we then check 
 with full-text cross-language searches on multiple social networks.
-Unlike the reverse approach of monitoring social networks first
+Unlike the reverse approach of monitoring social networks first,
 and potentially checking plausibility on Wikipedia second,
 the approach proposed in this paper has the advantage of
-being less prone to false-positive alerts while being equally sensitive
-to true-positive events, however, at a~fraction of the processing cost.
+being less prone to false-positive alerts, while being equally sensitive
+to true-positive events, however, at only a~fraction of the processing cost.
+A~demo of our application is available online at the URL \url{http://wikipedia-irc.herokuapp.com/}.
 
 \end{abstract}
 
-\category{H.3.3}{ Information Search and Retrieval}{Clustering}
+\category{H.3.3}{Information Search and Retrieval}{Clustering}
 
 \terms{Algorithms}
 
-\keywords{breaking news detection, Wikipedia, social networks}
+\keywords{Breaking News Detection, Event Detection, Wikipedia, Social Networks}
 
 \section{Introduction}
 
@@ -152,16 +142,17 @@ in analyzing such editing activity.
 
 \subsection{Hypotheses and Research Questions}
 
-In this paper, we present an application that monitors edits
-of the different language versions of Wikipedia in realtime
+In this paper, we present an application that monitors article edits
+of different language versions of Wikipedia in realtime
 in order to detect concurrent edit spikes that may be the source of
 breaking news events.
 When a~concurrent edit spike has been detected,
-we use cross-language full-text searches on multiple social networks
-as plausibility checks for filtering out false-positive alerts.
+we use full-text searches on social networks
+as plausibility checks to filter out false-positive alerts.
 We are driven by the following hypotheses.
 
 \begin{itemize}
+  \itemsep0em
   \item[(H1)] Breaking news events spread over social networks,
     independent from whether the news initially broke on a~social network or not.
   \item[(H2)] If a~breaking news event is important, it will be reflected on
@@ -173,44 +164,123 @@ We are driven by the following hypotheses.
 These hypotheses lead us to the research questions below.
 
 \begin{itemize}
+  \itemsep0em
   \item[(Q1)] Can concurrent Wikipedia edit spikes combined with
     social network plausibility checks capture major breaking news events,
     and with what delay?
-  \item[(Q2)] Is the approach ``Wikipedia first, social networks second''
-    at least as powerful as the reverse approach ``social networks first,
-    Wikipedia second''?
+  \item[(Q2)] Is the approach emph{Wikipedia first, social networks second}
+    at least as powerful as the reverse approach \emph{social networks first,
+    Wikipedia second}?
 \end{itemize}
 
 \subsection{Paper Structure}
-With this paper, we do not answer all research questions yet,
+In this paper, we do not answer all research questions yet,
 however, lay the foundation stone for future research in this area
 by the introduction of the application Wikipedia Live Monitor.
 The remainder of this paper is structured as follows.
+\todo{paper structure}
 
 \section{Related Work}
 
-\cite{petrovic2010streamingfirststory}
-
-\cite{osborne2012bieber}
+We refer to an event as breaking news, if the event is of significant importance
+to a~considerable amount of the population.
+Petrovi\'{c} \emph{et~al.} define~\cite{petrovic2010streamingfirststory}
+the goal of new event detection (or first story detection) as
+\textit{``given a~sequence of stories, to identify the first story
+to discuss a~particular event.''}
+They define an event as \textit{``something that happens
+at some specific time and place.''}
+Classic streaming analysis of social network microposts so far has been mainly
+focused on Twitter, a~microblogging social network that provides access
+to a~sampled stream of generated microposts by means of its Streaming API.%
+\footnote{\url{https://dev.twitter.com/docs/api/1.1/get/statuses/sample},
+accessed 02/18/2013}
+Petrovi\'{c} \emph{et~al.} explain~\cite{petrovic2010streamingfirststory}:
+\textit{``in the streaming model of computation,
+items arrive continuously in a~chronological order, and have to be
+processed in bounded space and time.''}
+In the referenced paper, the authors report on a~system for streaming
+new event detection applied to Twitter based on locality sensitive hashing.
+Hu \emph{et~al.} provide an analysis of how news break and spread on Twitter~%
+\cite{hu2012breakingnews}.
+The task of linking news events with social media is covered by Tsagkias
+\emph{et~al.} in~\cite{tsagkias2011linkingonlinenews}.
+With this paper, we stand on the shoulders\footnote{Hence the title of this paper.}
+of Osborne \emph{et~al.}~%
+\cite{osborne2012bieber}, who use Wikipedia page view statistics%
+\footnote{Page view statistics for Wikimedia projects \url{http://dumps.wikimedia.org/other/pagecounts-raw/},
+accessed 02/18/2013}
+as a~means to filter spurious events
+stemming from event detection over social network streams.
+Our approach reverses theirs, however, instead of the only hourly updated
+page view statistics, we use realtime change notifications,
+as explained in the upcoming section.
+The application Wikipedia Live Monitor is partly based on an application called
+Wikistream, developed by Ed Summers \emph{et~al.}, which was described in~%
+\cite{summers2011odetonode} and made available under the CC0 license.
 
 \section{Implementation Details}
 
+\subsection{Wikipedia Recent Changes}
+
+As briefly described earlier, our application monitors concurrent edit spikes
+on different language versions of Wikipedia.
+In the current implementation, we monitor 42 different Wiki\-pedias, 5 with 
+$\geq$~1,000,000 and 37 with $\geq$~100,000 articles.%
+\footnote{\url{http://meta.wikimedia.org/wiki/List_of_Wikipedias\#All_Wikipedias_ordered_by_number_of_articles},
+accessed 02/18/2013}.
+Changes to any single one article are communicated by a~chat bot
+over Wikipedia's own Internet Relay Chat~(IRC) server (\url{irc.wikimedia.org}),%
+\footnote{Raw IRC feeds of recent changes \url{http://meta.wikimedia.org/wiki/IRC/Channels\#Raw_feeds}, accessed 02/18/2013}
+so that parties interested in the data can listen to the changes as they happen.
+For each language version, there is a~specific chat room following the pattern
+\texttt{"\#" + language + ".wikipedia"}.
+For example, changes to Russian Wikipedia articles will be streamed to the room
+\texttt{\#ru.wikipedia}.
+A~special case is the room \texttt{\#wikidata.wikipedia} for Wikidata,
+a~platform for the collaborative acquisition and maintenance
+of structured data~\cite{vrandecic2012wikidata} to be used by
+Wikimedia projects like Wikipedia.
+
+\subsection{Article Clusters}
+
+We cluster edits of articles about the same topic but in different languages
+in article clusters.
+The example of the English article
+\emph{``en:2013\_Russian\_meteor\_event''}
+and the Russian article \fontencoding{T2A}\selectfont
+\emph{``ru:Падение\_метеорита\_на\_Урале\_в\_2013\_году''}
+\fontencoding{T1}\selectfont that are both in the same cluster illustrate this.
+We use the Wikipedia API to retrieve language links for a~given article.
+The URL pattern for the API is as follows.
+\url{http://$LANGUAGE.wikipedia.org/w/api.php?action=query&format=json&-prop=langlinks&titles=$ARTICLE}.
+
+
+\subsection{Comparing Article Revisions}
+
+The Wikipedia API provides means to retrieve the actual changes
+that were made during an edit including additions, deletions,
+and modifications, in a~\texttt{diff}-like manner.
+The URL pattern is as follows.
+\url{http://$LANGUAGE.wikipedia.org/w/api.php?action=compare&torev=$TO&fromrev=$FROM&format=json}.%$
+
 \subsection{Breaking News Criteria}
 
-1) >= 5 Occurrences 
-An article cluster must have at least n edits before it is considered a breaking news candidate.
+In order for an article cluster to be identified as breaking news candidate,
+it has to fulfill the following breaking news criteria.
 
-2) <=60 Seconds Between Edits 
-An article cluster may have at max n seconds in between edits in order to be regarded a breaking news candidate.
-
-3) >=2 Concurrent Editors
-An article cluster must be edited by at least n concurrent editors before it is considered a breaking news candidate.
-
-4) <=240 Seconds Since Last Edit 
-An article cluster is thrown out of the monitoring loop if its last edit is longer ago than n seconds.
-
-\footnote{Raw IRC feeds of recent changes \url{http://meta.wikimedia.org/wiki/IRC/Channels\#Raw_feeds}, accessed 02/18/2013}
-\footnote{Page view statistics for Wikimedia projects \url{http://dumps.wikimedia.org/other/pagecounts-raw/}, accessed 02/18/2013}
+\begin{description}
+  \itemsep0em
+  \item[$\geq$~5~Occurrences:] An article cluster must have occurred
+  in least 5~edits before it is considered a~breaking news candidate.
+  \item[$\leq$~60~Seconds Between Edits:] An article cluster may have
+  at maximum 60~seconds in between edits in order to be regarded
+  a~breaking news candidate.
+  \item[$\geq$~2~Concurrent Editors:] An article cluster must have been edited
+  by at least 2~concurrent editors before it is considered a~breaking news candidate.
+  \item[$\leq$~240~Seconds Since Last Edit:] An article cluster's last edit
+  may not be longer ago than 240~seconds.
+\end{description}
 
 \section{Premature Evaluation}
 

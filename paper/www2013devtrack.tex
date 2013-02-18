@@ -23,16 +23,15 @@
 \usepackage{relsize}
 \usepackage{listings}
 \usepackage{verbatim}
-\newcommand{\defaultlistingsize}{\fontsize{7.5pt}{9.5pt}}
+\newcommand{\defaultlistingsize}{\fontsize{8pt}{9.5pt}}
 \newcommand{\inlinelistingsize}{\fontsize{8pt}{11pt}}
 \newcommand{\smalllistingsize}{\fontsize{7.5pt}{9.5pt}}
 \newcommand{\listingsize}{\defaultlistingsize}
 \RecustomVerbatimCommand{\Verb}{Verb}{fontsize=\inlinelistingsize}
 \RecustomVerbatimEnvironment{Verbatim}{Verbatim}{fontsize=\defaultlistingsize}
 \lstset{frame=lines,captionpos=b,numberbychapter=false,escapechar=§,
-        aboveskip=0.5em,belowskip=0em,abovecaptionskip=0em,belowcaptionskip=0em,
-framexbottommargin=-1em,
-        basicstyle=\ttfamily\listingsize\selectfont}
+        aboveskip=2em,belowskip=1em,abovecaptionskip=0.5em,belowcaptionskip=0.5em,
+        framexbottommargin=-1em,basicstyle=\ttfamily\listingsize\selectfont}
 
 % use Courier from this point onward
 \let\oldttdefault\ttdefault
@@ -108,7 +107,10 @@ and potentially checking plausibility on Wikipedia second,
 the approach proposed in this paper has the advantage of
 being less prone to false-positive alerts, while being equally sensitive
 to true-positive events, however, at only a~fraction of the processing cost.
-A~demo of our application is available online at the URL \url{http://wikipedia-irc.herokuapp.com/}.
+A~live demo of our application is available online at the URL \url{http://wikipedia-irc.herokuapp.com/},
+the source code is available
+under the terms of the Apache~2.0 license at 
+\url{https://github.com/tomayac/wikipedia-irc}.
 
 \end{abstract}
 
@@ -116,7 +118,7 @@ A~demo of our application is available online at the URL \url{http://wikipedia-i
 
 \terms{Algorithms}
 
-\keywords{Breaking News Detection, Event Detection, Wikipedia, Social Networks}
+\keywords{Breaking News Detection, Wikipedia, Social Networks}
 
 \section{Introduction}
 
@@ -266,8 +268,12 @@ The URL pattern is as follows.
 
 \subsection{Breaking News Criteria}
 
-In order for an article cluster to be identified as breaking news candidate,
-it has to fulfill the following breaking news criteria.
+Our application Wikipedia Live Monitor puts  
+article clusters in a~monitoring loop wherein they stay
+until their time-to-live (240~seconds) is over.
+In order for an article cluster in the monitoring loop
+to be identified as breaking news candidate,
+the following breaking news criteria have to be fulfilled.
 
 \begin{description}
   \itemsep0em
@@ -281,6 +287,67 @@ it has to fulfill the following breaking news criteria.
   \item[$\leq$~240~Seconds Since Last Edit:] An article cluster's last edit
   may not be longer ago than 240~seconds.
 \end{description}
+
+The exact parameters of the breaking news criteria above
+were determined empirically by analyzing Wikipedia edits
+over several hours and repeatedly adjusting the settings until
+major news events happening at the same time were detected.
+The created dataset has been made publicly available online.%
+\footnote{\url{https://www.dropbox.com/sh/2qsg1zhb8p35fxf/Dghn55y0kh},
+accessed 02/18/2013}
+
+\subsection{Application Pseudocode}
+
+\autoref{code:pseudocode} shows the pseudocode of the
+Wikipedia Live Monitor application.
+
+\begin{lstlisting}[caption=Pseudocode of the cluster visual representative selection algorithm that finds the highest quality media item of a~cluster,
+  label=code:pseudocode, float]
+§\textbf{Input: irc, listening on Wikipedia recent changes}§ 
+§\textbf{Output: breakingNewsCandidates, list of breaking news}§ 
+
+§\textbf{init:}§
+
+monitoringLoop = {}
+articleClusters = {}
+breakingNewsCandidates = {}
+  
+irc.on.message §\textbf{do (article)}§
+
+  languageRefs = getLanguageRefs(article)
+  articleRev = getArticleRev(article)
+  clusterArticles(article, languageRefs)  
+  
+  §\textbf{if}§ article not in monitoringLoop
+    monitoringLoop.push(article)
+    updateStatistics(article)
+    emit.newArticle(article, articleRev)    
+  §\textbf{else}§
+    updateStatistics(article)
+    emit.existingArticle(article, articleRev)
+    §\textbf{if}§ article.occurrences >= 5
+      §\textbf{if}§ article.secsBetweenEdits <= 60      
+        §\textbf{if}§ article.numEditors >= 2
+          §\textbf{if}§ article.secsSinceLastEdit <= 240
+            emit.breakingNewsCandidate(article)
+            socialNetworks.search(languageRefs)
+            breakingNewsCandidates.push(article)
+          §\textbf{end if}§          
+        §\textbf{end if}§  
+      §\textbf{end if}§        
+    §\textbf{end if}§          
+  §\textbf{end if}§
+  §\textbf{return}§ breakingNewsCandidates
+§\textbf{end do}§
+
+timeout.every.240seconds §\textbf{do}§
+  §\textbf{for each}§ article §\textbf{in}§ monitoringLoop
+    §\textbf{if}§ article.secsSinceLastEdit >= 240
+      monitoringLoop.remove(article)
+    §\textbf{end if}§
+  §\textbf{end for}§ 
+§\textbf{end do}§
+\end{lstlisting}
 
 \section{Premature Evaluation}
 

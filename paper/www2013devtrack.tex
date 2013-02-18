@@ -114,7 +114,7 @@ both in only one and in different languages.
 We treat such concurrent edit spikes as signals
 for potential breaking news events, whose plausibility we then check 
 with full-text cross-language searches on multiple social networks.
-Unlike the opposite approach of monitoring social networks first
+Unlike the reverse approach of monitoring social networks first
 and potentially checking plausibility on Wikipedia second,
 the approach proposed in this paper has the advantage of
 being less prone to false-positive alerts while being equally sensitive
@@ -122,24 +122,80 @@ to true-positive events, however, at a~fraction of the processing cost.
 
 \end{abstract}
 
-\category{I.2.10}{Vision and Scene Understanding}{Video analysis} 
-\category{H.5.1}{Multimedia Information Systems}{Video (e.g., tape, disk, DVI)}
+\category{H.3.3}{ Information Search and Retrieval}{Clustering}
 
 \terms{Algorithms}
 
-\keywords{}
+\keywords{breaking news detection, Wikipedia, social networks}
 
 \section{Introduction}
 
+\subsection{Motivation}
 
+Shortly after the celebrity news website TMZ
+broke the premature news that the King of Pop Michael Jackson~(MJ) had died,%
+\footnote{\url{http://www.tmz.com/2009/06/25/michael-jackson-dies-death-dead-cardiac-arrest/},
+accessed 02/18/2013}
+the Internet slowed down.%
+\footnote{\url{http://news.bbc.co.uk/2/hi/technology/8120324.stm}, accessed 02/18/2013}
+Initially, Wikipedia's website administrators started noting abnormal load spikes~%
+\cite{vibber2009currentevents} and shortly afterwards, caching issues
+caused by a~so-called edit war~\cite{beaumont2009editwar} led the site to go down:
+Wikipedia editors worldwide made concurrent edits
+to the Michael Jackson Wikipedia article, doing and undoing changes
+regarding the tense (present tense to past tense), death date,
+and the circumstances of the at the time officially still unconfirmed fatality.
+While the Wikipedia engineers have worked hard
+to ensure that future edit wars or concurrent edits
+do not take the site down again, there is without dispute a~lot of research potential
+in analyzing such editing activity.
+
+\subsection{Hypotheses and Research Questions}
+
+In this paper, we present an application that monitors edits
+of the different language versions of Wikipedia in realtime
+in order to detect concurrent edit spikes that may be the source of
+breaking news events.
+When a~concurrent edit spike has been detected,
+we use cross-language full-text searches on multiple social networks
+as plausibility checks for filtering out false-positive alerts.
+We are driven by the following hypotheses.
+
+\begin{itemize}
+  \item[(H1)] Breaking news events spread over social networks,
+    independent from whether the news initially broke on a~social network or not.
+  \item[(H2)] If a~breaking news event is important, it will be reflected on
+    at least one language edition of Wikipedia.
+  \item[(H3)] The time between when the news broke first and the news
+    being reflected on Wikipedia is considerably short.   
+\end{itemize}
+
+These hypotheses lead us to the research questions below.
+
+\begin{itemize}
+  \item[(Q1)] Can concurrent Wikipedia edit spikes combined with
+    social network plausibility checks capture major breaking news events,
+    and with what delay?
+  \item[(Q2)] Is the approach ``Wikipedia first, social networks second''
+    at least as powerful as the reverse approach ``social networks first,
+    Wikipedia second''?
+\end{itemize}
+
+\subsection{Paper Structure}
+With this paper, we do not answer all research questions yet,
+however, lay the foundation stone for future research in this area
+by the introduction of the application Wikipedia Live Monitor.
+The remainder of this paper is structured as follows.
+
+\section{Related Work}
 
 \cite{petrovic2010streamingfirststory}
 
 \cite{osborne2012bieber}
 
-\footnote{Raw IRC feeds of recent changes \url{http://meta.wikimedia.org/wiki/IRC/Channels\#Raw_feeds}, accessed 02/18/2013}
-\footnote{Page view statistics for Wikimedia projects \url{http://dumps.wikimedia.org/other/pagecounts-raw/}, accessed 02/18/2013}
+\section{Implementation Details}
 
+\subsection{Breaking News Criteria}
 
 1) >= 5 Occurrences 
 An article cluster must have at least n edits before it is considered a breaking news candidate.
@@ -152,6 +208,13 @@ An article cluster must be edited by at least n concurrent editors before it is 
 
 4) <=240 Seconds Since Last Edit 
 An article cluster is thrown out of the monitoring loop if its last edit is longer ago than n seconds.
+
+\footnote{Raw IRC feeds of recent changes \url{http://meta.wikimedia.org/wiki/IRC/Channels\#Raw_feeds}, accessed 02/18/2013}
+\footnote{Page view statistics for Wikimedia projects \url{http://dumps.wikimedia.org/other/pagecounts-raw/}, accessed 02/18/2013}
+
+\section{Premature Evaluation}
+
+\section{Conclusions and Future Work}
 
 \bibliographystyle{abbrv}
 \bibliography{www2013devtrack}

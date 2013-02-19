@@ -77,13 +77,19 @@
 
 \title{MJ no more: Using Concurrent Wikipedia Edit Spikes\\ with Social Network Plausibility Checks\\ for Breaking News Detection}
 
-\numberofauthors{2}\author{
+\numberofauthors{3}\author{
 \alignauthor
 Thomas Steiner\\
 	\affaddr{Google Germany GmbH}\\
 	\affaddr{ABC-Str. 19}\\
 	\affaddr{20354 Hamburg, Germany}\\
 	\email{tomac@google.com} 
+\alignauthor
+Seth van Hooland\\
+	\affaddr{Université Libre de Bruxelles}\\
+	\affaddr{Avenue F.D. Roosevelt, 16}\\
+	\affaddr{1050 Brussels, Belgium}\\
+	\email{svhoolan@ulb.ac.be}	
 \alignauthor
 Ed Summers\\
 	\affaddr{Library of Congress}\\
@@ -232,6 +238,16 @@ Wikipedia Live Monitor is partly based on an application called
 Wikistream, developed by Ed Summers \emph{et~al.}, which was described in~%
 \cite{summers2011odetonode}.
 
+\begin{figure*}[t!]
+  \centering
+  \includegraphics[width=\linewidth]{./wikipedia-live-monitor.png}
+  \caption{Screenshot with an article cluster of four concurrently edited articles
+    (ru, en, pt, ca). All breaking news criteria are fulfilled,
+    the cluster is a breaking news candidate.
+    Cross-language social network search results for en and pt can be seen.}
+  \label{fig:screenshot}
+\end{figure*}
+
 \section{Implementation Details}
 
 \subsection{Wikipedia Recent Changes}
@@ -279,12 +295,12 @@ We use the Wikipedia API to retrieve language links for a~given article.
 The URL pattern for the API is as follows.
 \url{http://$LANGUAGE.wikipedia.org/w/api.php?action=query&format=json&-prop=langlinks&titles=$ARTICLE}.
 
-
 \subsection{Comparing Article Revisions}
+\label{sec:comparing-article-revisions}
 
 The Wikipedia API provides means to retrieve the actual changes
 that were made during an edit including additions, deletions,
-and modifications, in a~\texttt{diff}-like manner.
+and modifications in a~\texttt{diff}-like manner.
 The URL pattern is as follows.
 \url{http://$LANGUAGE.wikipedia.org/w/api.php?action=compare&torev=$TO&fromrev=$FROM&format=json}. %$%
 This allows us to classify edits in categories, like, \emph{e.g.},
@@ -328,7 +344,14 @@ When a~breaking news candidate has been identified,
 we use cross-language full-text social network searches 
 on the social networks Twitter, Facebook, and \googleplus
 as a~plausibility check.
-Currently this step is not yet fully automated,
+As the article titles of all language versions
+of the particular article's cluster are know,
+we use them for cross-language searches, as can be seen in \autoref{fig:screenshot}.
+This approach greatly improves the recall of the social network search,
+however, requires either automatic translation, or an at least basic understanding
+of the languages being searched in.
+
+Currently the plausibility checking step is not yet fully automated,
 as the search results are meant to be consumed by a~human evaluator.
 Driven by (H1), we assume breaking news events to be discussed on social networks.
 We will show the details of this argument in \autoref{sec:premature-evaluation},
@@ -355,9 +378,9 @@ wrapped by  Guillermo Rauch's library Socket.IO.%
 \footnote{Socket.IO library: \url{http://socket.io/},
 accessed 02/18/2013}
 
-\begin{lstlisting}[caption=Pseudocode of the two main event loops
-  of the Wikipedia Live Monitor application,
-  label=code:pseudocode, float]
+\begin{lstlisting}[caption=The two main event loops
+  of the application,
+  label=code:pseudocode, float=b!]
 §\textbf{Input: irc, listening on Wikipedia recent changes}§ 
 §\textbf{Output: breakingNewsCandidates, breaking news candidates}§ 
 
@@ -366,8 +389,7 @@ accessed 02/18/2013}
 monitoringLoop = {}
 articleClusters = {}
 breakingNewsCandidates = {}
-  
-  
+ 
 §\textit{\# Event loop 1:}§
 §\textit{\# When a new message arrives}§
 irc.on.message §\textbf{do (article)}§
@@ -400,7 +422,6 @@ irc.on.message §\textbf{do (article)}§
   §\textbf{end if}§
   §\textbf{return}§ breakingNewsCandidates
 §\textbf{end do}§
-
 
 §\textit{\# Event loop 2:}§
 §\textit{\# Remove too old clusters regularly}§
@@ -479,25 +500,47 @@ A~systematic evaluation of (Q2) requires a~commonly shared dataset,
 which we have provided, however, at this point we do not have access to the system
 of Osborne \emph{et~al.}
 
-\begin{figure*}
-  \centering
-  \includegraphics[width=1\linewidth]{./wikipedia-live-monitor.png}
-  \caption{Screenshot with an article cluster of four concurrently edited articles
-    (ru, en, pt, ca). All breaking news criteria are fulfilled,
-    the cluster is a breaking news candidate.
-    Cross-language social network search results for en and pt can be seen.}
-  \label{fig:screenshot}
-\end{figure*}
+Regarding Wikipedia Live Monitor's scalability, we could scale the monitoring system
+up to currently \emph{all} 284~Wikipedias on a~standard consumer laptop
+(mid-2010 MacBook Pro, 2.66~GHz Intel Core~2, 8~GB RAM),
+which once more proves the efficiency of the Node.js architecture
+for this kind of event-driven applications.
+In practice, however, the majority of the smaller Wikipedias being very rarely updated,
+we limit ourselves to the Wikipedias with 100,000 articles and more
+at no remarkable loss of recall.
 
 \section{Future Work}
 
+Future work will mainly address two areas.
+First, the automatic categorization of edits on Wikipedia needs to be more fine-grained.
+In the context of breaking news detection, not all edits are equally useful.
+An image being added to an article is an example of an edit
+that usually will not be important.
+In contrast, the category ``Living people'' being removed from an article
+is a~strong indicator of breaking (sad) news.
+Second, the connection between social network search and Wikipedia edits
+needs to be made clearer. 
+In an initial step, the concrete changes to an article as detailed in
+\autoref{sec:comparing-article-revisions} can be compared with
+social network microposts using a~cosine similarity measure.
+More advanced steps can exploit the potential knowledge from Wikipedia edits
+(\emph{e.g.}, category ``Living people'' removed implies a~fatality).
 
 \section{Conclusions}
 
+In this paper, we have shown an application called Wikipedia Live Monitor
+and released its source code under the Apache~2.0 license.
+This application monitors article edits on 42 different language versions of Wikipedia.
+It detects breaking news candidates according to well-defined breaking news criteria
+whose exact parameters were determined empirically
+and the corresponding dataset made available publicly.
+We have shown how cross-language full-text social network searches are used
+as plausibility checks to avoid false-positive alerts.
+In a~first step towards a~full evaluation,
+we have shown promising preliminary results
+and actionable next steps in future work for improving the application.
 
-\balancecolumns
 \bibliographystyle{abbrv}
 \bibliography{www2013devtrack}
 
-\balancecolumns
 \end{document}

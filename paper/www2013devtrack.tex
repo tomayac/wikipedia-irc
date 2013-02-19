@@ -75,7 +75,7 @@
 % --- End of Author Metadata ---
 
 
-\title{MJ no more: Using Concurrent Wikipedia Edit Spikes\\ with Social Network Plausibility Checks\\ to Detect Breaking News}
+\title{MJ no more: Using Concurrent Wikipedia Edit Spikes\\ with Social Network Plausibility Checks\\ for Breaking News Detection}
 
 \numberofauthors{2}\author{
 \alignauthor
@@ -322,6 +322,21 @@ The created dataset split in three chunks has been made publicly available.%
 \footnote{Wikipedia Live Monitor dataset: \url{https://www.dropbox.com/sh/2qsg1zhb8p35fxf/Dghn55y0kh},
 accessed 02/18/2013}
 
+\subsection{Social Network Plausibility Checks}
+
+When a~breaking news candidate has been identified,
+we use cross-language full-text social network searches 
+on the social networks Twitter, Facebook, and \googleplus
+as a~plausibility check.
+Currently this step is not yet fully automated,
+as the search results are meant to be consumed by a~human evaluator.
+Driven by (H1), we assume breaking news events to be discussed on social networks.
+We will show the details of this argument in \autoref{sec:premature-evaluation},
+for now, we assume social networks to be a~short period ahead of Wikipedia.
+In consequence, if the human rater can find positive evidence
+for a~connection between social network activities and Wikipedia edit actions,
+the breaking news candidate is confirmed to indeed be breaking news.
+
 \subsection{Application Pseudocode}
 
 The Wikipedia Live Monitor application has been implemented in Node.js,
@@ -336,9 +351,9 @@ Martyn Smith's Node.js IRC library%
 \footnote{Node.js IRC library: \url{https://github.com/martynsmith/node-irc},
 accessed 02/18/2013} and
 the WebSockets API and protocol~\cite{hickson2012websockets},
-wrapped by  Guillermo Rauch's library Socket.IO%
+wrapped by  Guillermo Rauch's library Socket.IO.%
 \footnote{Socket.IO library: \url{http://socket.io/},
-accessed 02/18/2013}.
+accessed 02/18/2013}
 
 \begin{lstlisting}[caption=Pseudocode of the two main event loops
   of the Wikipedia Live Monitor application,
@@ -351,6 +366,7 @@ accessed 02/18/2013}.
 monitoringLoop = {}
 articleClusters = {}
 breakingNewsCandidates = {}
+  
   
 §\textit{\# Event loop 1:}§
 §\textit{\# When a new message arrives}§
@@ -385,6 +401,7 @@ irc.on.message §\textbf{do (article)}§
   §\textbf{return}§ breakingNewsCandidates
 §\textbf{end do}§
 
+
 §\textit{\# Event loop 2:}§
 §\textit{\# Remove too old clusters regularly}§
 timeout.every.240seconds §\textbf{do}§
@@ -398,8 +415,9 @@ timeout.every.240seconds §\textbf{do}§
 \end{lstlisting}
 
 \section{Premature Evaluation}
+\label{sec:premature-evaluation}
 
-As briefly noted earlier, in this paper,
+As noted earlier, in this paper,
 we do not answer all research questions yet.
 Nevertheless, we extract trends from our experiments so far.
 In \autoref{sec:hypotheses-and-research-questions},
@@ -409,13 +427,13 @@ We argue that it can be generalized to other social networks
 and invite the reader to have a~look at our dataset,
 where the lively discussions about breaking news candidates
 on the considered social networks Twitter, Facebook, and \googleplus
-support the assumption.
+support the argumentation.
 It is hard to prove (H2), as the concept of \emph{important breaking news}
 is vague and dependent on one's personal background, however,
 all evidence suggests that (H2) indeed holds true,
 as, to the best of our knowledge and given our background,
 what the authors consider \emph{important breaking news}
-is represented on Wikipedia.
+is represented on at least one language version of Wikipedia.
 (H3) has been examined by Osborne \emph{et~al.} in~\cite{osborne2012bieber}.
 In the paper, they suggest that Wikipedia lags about two hours behind Twitter.
 It has to be noted that they look at hourly accumulated page (article) \emph{view} logs,
@@ -429,6 +447,38 @@ in the range of five minutes and less,
 albeit the edits by our experience will be small and iterative
 (``X is a'' to ``X was a'', or the addition of a~death date).
 
+The at time of writing recent breaking news event
+of the resignation of Pope Benedict XVI helps respond to (Q1).
+The first three edit times of the Pope's English Wikipedia article%
+\footnote{Edit history en: \url{http://en.wikipedia.org/w/index.php?title=Pope_Benedict_XVI&action=history},
+accessed 02/18/2013} on February 11, 2013,
+the day of his resignation, are as follows
+(all times in UTC): 10:58, 10:59, 11:02.
+The edit times of the French article%
+\footnote{Edit history fr: \url{http://fr.wikipedia.org/w/index.php?title=Beno\%C3\%AEt_XVI&action=history}, accessed 02/18/2013}
+are as follows: 11:00, 11:00, 11:01.
+This implies that by looking at only two language versions
+(the actual number of monitored versions is 42) of the Pope article,
+the system would have reported the news at 11:01.
+The official Twitter account of Reuters announced%
+\footnote{Reuters announces Pope resignation: \url{https://twitter.com/Reuters/status/300922108811284480},
+accessed 02/18/2013} the news at 10:59.
+Vatican Radio's announcement%
+\footnote{Vatican Radio announces Pope resignation: \url{http://de.radiovaticana.va/Articolo.asp?c=663810},
+accessed 02/18/2013} was made at 10:57:47.
+Not all breaking news events have the same global impact as the Pope's resignation,
+however, the proposed system was shown to work very reliably
+for smaller events of more regional impact as well, for example,
+when Indian singer Varsha Bhosle committed suicide%
+\footnote{Varsha Bhosle suicide: \url{en.wikipedia.org/wiki/Varsha_Bhosle},
+accessed 02/18/2013} on 8 October 2012.
+A~systematic evaluation of (Q1) compulsorily can only be done by random samples,
+which has turned out positive results so far.
+Again, we invite the reader to explore our dataset and to conduct own experiments.
+A~systematic evaluation of (Q2) requires a~commonly shared dataset,
+which we have provided, however, at this point we do not have access to the system
+of Osborne \emph{et~al.}
+
 \begin{figure*}
   \centering
   \includegraphics[width=1\linewidth]{./wikipedia-live-monitor.png}
@@ -439,9 +489,13 @@ albeit the edits by our experience will be small and iterative
   \label{fig:screenshot}
 \end{figure*}
 
-\section{Conclusions and Future Work}
+\section{Future Work}
 
-%\balancecolumns
+
+\section{Conclusions}
+
+
+\balancecolumns
 \bibliographystyle{abbrv}
 \bibliography{www2013devtrack}
 

@@ -58,7 +58,7 @@
 \definecolor{grey}{RGB}{130,130,130}
 \newcommand{\linewrap}{\raisebox{-.6ex}{\textcolor{grey}{$\hookleftarrow$}}}
 
-\hyphenation{}
+\hyphenation{Wikistream Wikipedia Wikipedias}
 
 %\def\baselinestretch{0.99}
 
@@ -126,19 +126,19 @@ under the terms of the Apache~2.0 license at
 
 Shortly after the celebrity news website TMZ
 broke the premature news that the King of Pop Michael Jackson~(MJ) had died,%
-\footnote{\url{http://www.tmz.com/2009/06/25/michael-jackson-dies-death-dead-cardiac-arrest/},
+\footnote{MJ dead: \url{http://www.tmz.com/2009/06/25/michael-jackson-dies-death-dead-cardiac-arrest/},
 accessed 02/18/2013}
 the Internet slowed down.%
-\footnote{\url{http://news.bbc.co.uk/2/hi/technology/8120324.stm}, accessed 02/18/2013}
+\footnote{Internet slow-down: \url{http://news.bbc.co.uk/2/hi/technology/8120324.stm}, accessed 02/18/2013}
 Initially, Wikipedia's website administrators started noting abnormal load spikes~%
-\cite{vibber2009currentevents} and shortly afterwards, caching issues
+\cite{vibber2009currentevents}. Shortly afterwards, caching issues
 caused by a~so-called edit war~\cite{beaumont2009editwar} led the site to go down:
 Wikipedia editors worldwide made concurrent edits
 to the Michael Jackson Wikipedia article, doing and undoing changes
-regarding the tense (present tense to past tense), death date,
+regarding the tense of the article, death date,
 and the circumstances of the at the time officially still unconfirmed fatality.
-While the Wikipedia engineers have worked hard
-to ensure that future edit wars or concurrent edits
+While Wikipedia engineers have worked hard
+to ensure that future load spikes
 do not take the site down again, there is without dispute a~lot of research potential
 in analyzing such editing activity.
 
@@ -156,31 +156,27 @@ We are driven by the following hypotheses.
 \begin{itemize}
   \itemsep0em
   \item[(H1)] Breaking news events spread over social networks,
-    independent from whether the news initially broke on a~social network or not.
+    independent from where the news broke initially.
   \item[(H2)] If a~breaking news event is important, it will be reflected on
     at least one language edition of Wikipedia.
   \item[(H3)] The time between when the news broke first and the news
     being reflected on Wikipedia is considerably short.   
 \end{itemize}
 
-These hypotheses lead us to the research questions below.
+\noindent These hypotheses lead us to the research questions below.
 
 \begin{itemize}
   \itemsep0em
   \item[(Q1)] Can concurrent Wikipedia edit spikes combined with
     social network plausibility checks capture major breaking news events,
-    and with what delay?
-  \item[(Q2)] Is the approach emph{Wikipedia first, social networks second}
-    at least as powerful as the reverse approach \emph{social networks first,
-    Wikipedia second}?
+    and if so, with what delay?
+  \item[(Q2)] Is the approach \emph{Wikipedia first, social networks second}
+    at least as powerful as the reverse approach?
 \end{itemize}
 
-\subsection{Paper Structure}
 In this paper, we do not answer all research questions yet,
 however, lay the foundation stone for future research in this area
-by the introduction of the application Wikipedia Live Monitor.
-The remainder of this paper is structured as follows.
-\todo{paper structure}
+by introducing the Wikipedia Live Monitor application.
 
 \section{Related Work}
 
@@ -195,7 +191,7 @@ at some specific time and place.''}
 Classic streaming analysis of social network microposts so far has been mainly
 focused on Twitter, a~microblogging social network that provides access
 to a~sampled stream of generated microposts by means of its Streaming API.%
-\footnote{\url{https://dev.twitter.com/docs/api/1.1/get/statuses/sample},
+\footnote{Twitter Streaming API: \url{https://dev.twitter.com/docs/api/1.1/get/statuses/sample},
 accessed 02/18/2013}
 Petrovi\'{c} \emph{et~al.} explain~\cite{petrovic2010streamingfirststory}:
 \textit{``in the streaming model of computation,
@@ -210,45 +206,53 @@ The task of linking news events with social media is covered by Tsagkias
 With this paper, we stand on the shoulders\footnote{Hence the title of this paper.}
 of Osborne \emph{et~al.}~%
 \cite{osborne2012bieber}, who use Wikipedia page view statistics%
-\footnote{Page view statistics for Wikimedia projects \url{http://dumps.wikimedia.org/other/pagecounts-raw/},
+\footnote{Page view statistics for Wikimedia projects: \url{http://dumps.wikimedia.org/other/pagecounts-raw/},
 accessed 02/18/2013}
 as a~means to filter spurious events
 stemming from event detection over social network streams.
 Our approach reverses theirs, however, instead of the only hourly updated
 page view statistics, we use realtime change notifications,
-as explained in the upcoming section.
-The application Wikipedia Live Monitor is partly based on an application called
+as explained in \autoref{sec:wikipedia-recent-changes}.
+Wikipedia Live Monitor is partly based on an application called
 Wikistream, developed by Ed Summers \emph{et~al.}, which was described in~%
-\cite{summers2011odetonode} and made available under the CC0 license.
+\cite{summers2011odetonode}.
 
 \section{Implementation Details}
 
 \subsection{Wikipedia Recent Changes}
+\label{sec:wikipedia-recent-changes}
 
-As briefly described earlier, our application monitors concurrent edit spikes
+As described earlier, our application monitors concurrent edit spikes
 on different language versions of Wikipedia.
 In the current implementation, we monitor 42 different Wiki\-pedias, 5 with 
 $\geq$~1,000,000 and 37 with $\geq$~100,000 articles.%
-\footnote{\url{http://meta.wikimedia.org/wiki/List_of_Wikipedias\#All_Wikipedias_ordered_by_number_of_articles},
-accessed 02/18/2013}.
+\footnote{List of Wikipedias by size: \url{http://meta.wikimedia.org/wiki/List_of_Wikipedias},
+accessed 02/18/2013}
 Changes to any single one article are communicated by a~chat bot
 over Wikipedia's own Internet Relay Chat~(IRC) server (\url{irc.wikimedia.org}),%
-\footnote{Raw IRC feeds of recent changes \url{http://meta.wikimedia.org/wiki/IRC/Channels\#Raw_feeds}, accessed 02/18/2013}
+\footnote{Raw IRC feeds of recent changes: \url{http://meta.wikimedia.org/wiki/IRC/Channels\#Raw_feeds}, accessed 02/18/2013}
 so that parties interested in the data can listen to the changes as they happen.
 For each language version, there is a~specific chat room following the pattern
 \texttt{"\#" + language + ".wikipedia"}.
 For example, changes to Russian Wikipedia articles will be streamed to the room
 \texttt{\#ru.wikipedia}.
-A~special case is the room \texttt{\#wikidata.wikipedia} for Wikidata,
+A~special case is the room \texttt{\#wikidata.wikipedia} for Wikidata~%
+~\cite{vrandecic2012wikidata},
 a~platform for the collaborative acquisition and maintenance
-of structured data~\cite{vrandecic2012wikidata} to be used by
+of structured data to be used by
 Wikimedia projects like Wikipedia.
+A~sample chat message with the components separated
+by the asterisk character \texttt{'*'}
+announcing a~change can be seen in the following.
+\texttt{"[[Juniata River]] http://en.wikipedia.org/w/index.php?diff=516269072&oldid=5146\-59029 * Johanna-Hypatia * (+67) Category:Place names of Native American origin in Pennsylvania"}.
+The message components are (i) article name, (ii) revision URL,
+(iii) Wikipedia editor handle, and (iv) change size and change description.
 
 \subsection{Article Clusters}
 
-We cluster edits of articles about the same topic but in different languages
-in article clusters.
-The example of the English article
+We cluster edits of articles about the same topic
+but written in different languages in article clusters.
+The example of the English
 \emph{``en:2013\_Russian\_meteor\_event''}
 and the Russian article \fontencoding{T2A}\selectfont
 \emph{``ru:Падение\_метеорита\_на\_Урале\_в\_2013\_году''}
@@ -264,12 +268,17 @@ The Wikipedia API provides means to retrieve the actual changes
 that were made during an edit including additions, deletions,
 and modifications, in a~\texttt{diff}-like manner.
 The URL pattern is as follows.
-\url{http://$LANGUAGE.wikipedia.org/w/api.php?action=compare&torev=$TO&fromrev=$FROM&format=json}.%$
+\url{http://$LANGUAGE.wikipedia.org/w/api.php?action=compare&torev=$TO&fromrev=$FROM&format=json}. %$%
+This allows us to classify edits in categories, like, \emph{e.g.},
+negligible trivial edits (punctuation correction) and 
+major important edits (new paragraph for an article),
+which allows us to disregard seemingly concurrent edits
+in order to avoid false-positive alerts.
 
 \subsection{Breaking News Criteria}
 
 Our application Wikipedia Live Monitor puts  
-article clusters in a~monitoring loop wherein they stay
+detected article clusters in a~monitoring loop in which they remain
 until their time-to-live (240~seconds) is over.
 In order for an article cluster in the monitoring loop
 to be identified as breaking news candidate,
@@ -278,12 +287,11 @@ the following breaking news criteria have to be fulfilled.
 \begin{description}
   \itemsep0em
   \item[$\geq$~5~Occurrences:] An article cluster must have occurred
-  in least 5~edits before it is considered a~breaking news candidate.
+  in at least 5~edits.
   \item[$\leq$~60~Seconds Between Edits:] An article cluster may have
-  at maximum 60~seconds in between edits in order to be regarded
-  a~breaking news candidate.
+  at maximum 60~seconds in between edits.
   \item[$\geq$~2~Concurrent Editors:] An article cluster must have been edited
-  by at least 2~concurrent editors before it is considered a~breaking news candidate.
+  by at least 2~concurrent editors.
   \item[$\leq$~240~Seconds Since Last Edit:] An article cluster's last edit
   may not be longer ago than 240~seconds.
 \end{description}
@@ -292,28 +300,32 @@ The exact parameters of the breaking news criteria above
 were determined empirically by analyzing Wikipedia edits
 over several hours and repeatedly adjusting the settings until
 major news events happening at the same time were detected.
-The created dataset has been made publicly available online.%
-\footnote{\url{https://www.dropbox.com/sh/2qsg1zhb8p35fxf/Dghn55y0kh},
+The created dataset split in three chunks has been made publicly available.%
+\footnote{Wikipedia Live Monitor dataset: \url{https://www.dropbox.com/sh/2qsg1zhb8p35fxf/Dghn55y0kh},
 accessed 02/18/2013}
 
 \subsection{Application Pseudocode}
 
-\autoref{code:pseudocode} shows the pseudocode of the
+The Wikipedia Live Monitor application has been implemented in Node.js,
+a~server side JavaScript software system
+designed for writing scalable Internet applications.
+Programs are created using event-driven, asynchronous input/output operations
+to minimize overhead and maximize scalability.
+\autoref{code:pseudocode} shows the pseudocode of the two main event loops of the
 Wikipedia Live Monitor application.
 The actual implementation is based on 
-Martyn Smith's node.js IRC library%
-\footnote{\url{https://github.com/martynsmith/node-irc},
-accessed 02/18/2013},
-WebSockets~\cite{hickson2012websockets},
-and a~library for searching social networks simultaneously%
-\footnote{\url{https://github.com/tomayac/media-server},
-accessed 02/18/2013}
+Martyn Smith's Node.js IRC library%
+\footnote{Node.js IRC library: \url{https://github.com/martynsmith/node-irc},
+accessed 02/18/2013} and
+the WebSockets API and protocol~\cite{hickson2012websockets},
+wrapped by  Guillermo Rauch's library Socket.IO%
+\footnote{Socket.IO library: \url{http://socket.io/},
+accessed 02/18/2013}.
 
-
-\begin{lstlisting}[caption=Pseudocode of the cluster visual representative selection algorithm that finds the highest quality media item of a~cluster,
+\begin{lstlisting}[caption=Pseudocode of the two main event loops of the Wikipedia Live Monitor application,
   label=code:pseudocode, float]
 §\textbf{Input: irc, listening on Wikipedia recent changes}§ 
-§\textbf{Output: breakingNewsCandidates, list of breaking news}§ 
+§\textbf{Output: breakingNewsCandidates, breaking news candidates}§ 
 
 §\textbf{init:}§
 
@@ -321,26 +333,31 @@ monitoringLoop = {}
 articleClusters = {}
 breakingNewsCandidates = {}
   
+§\textit{\# Event loop 1:}§
+§\textit{\# When a new message arrives}§
 irc.on.message §\textbf{do (article)}§
-
-  languageRefs = getLanguageRefs(article)
-  articleRev = getArticleRev(article)
-  clusterArticles(article, languageRefs)  
+  langRefs = getLanguageReferences(article)
+  articleRevs = getArticleRevisions(article)
+  cluster = clusterArticles(article, langRefs)  
   
-  §\textbf{if}§ article not in monitoringLoop
-    monitoringLoop.push(article)
-    updateStatistics(article)
-    emit.newArticle(article, articleRev)    
+  §\textit{\# Create new cluster for previously unseen article}§
+  §\textbf{if}§ cluster not in monitoringLoop
+    monitoringLoop.push(cluster)
+    articleClusters.push(cluster)
+    updateStatistics(cluster)
+    emit.newCluster(cluster, articleRevs)    
+  §\textit{\# Update existing cluster, article was seen before}§
   §\textbf{else}§
-    updateStatistics(article)
-    emit.existingArticle(article, articleRev)
-    §\textbf{if}§ article.occurrences >= 5
-      §\textbf{if}§ article.secsBetweenEdits <= 60      
-        §\textbf{if}§ article.numEditors >= 2
-          §\textbf{if}§ article.secsSinceLastEdit <= 240
-            emit.breakingNewsCandidate(article)
-            socialNetworks.search(languageRefs)
-            breakingNewsCandidates.push(article)
+    updateStatistics(cluster)
+    emit.existingCluster(cluster, articleRevs)
+    §\textit{\# Check breaking news criteria}§
+    §\textbf{if}§ cluster.occurrences >= 5
+      §\textbf{if}§ cluster.secsBetweenEdits <= 60      
+        §\textbf{if}§ cluster.numEditors >= 2
+          §\textbf{if}§ cluster.secsSinceLastEdit <= 240
+            socialNetworks.search(langRefs)
+            breakingNewsCandidates.push(cluster)
+            emit.breakingNewsCandidate(cluster)            
           §\textbf{end if}§          
         §\textbf{end if}§  
       §\textbf{end if}§        
@@ -349,10 +366,13 @@ irc.on.message §\textbf{do (article)}§
   §\textbf{return}§ breakingNewsCandidates
 §\textbf{end do}§
 
+§\textit{\# Event loop 2:}§
+§\textit{\# Remove too old clusters regularly}§
 timeout.every.240seconds §\textbf{do}§
-  §\textbf{for each}§ article §\textbf{in}§ monitoringLoop
-    §\textbf{if}§ article.secsSinceLastEdit >= 240
-      monitoringLoop.remove(article)
+  §\textbf{for each}§ cluster §\textbf{in}§ monitoringLoop
+    §\textbf{if}§ cluster.secsSinceLastEdit >= 240
+      monitoringLoop.remove(cluster)
+      articleClusters.remove(cluster)
     §\textbf{end if}§
   §\textbf{end for}§ 
 §\textbf{end do}§
@@ -360,8 +380,20 @@ timeout.every.240seconds §\textbf{do}§
 
 \section{Premature Evaluation}
 
+\begin{figure*}
+  \centering
+  \includegraphics[width=1\linewidth]{./wikipedia-live-monitor.png}
+  \caption{Screenshot with
+    an article cluster of four concurrently edited articles (ru, en, pt, ca).
+    All breaking news criteria are fulfilled, the cluster is a breaking news candidate.
+    Cross-language social network search results for en and pt can be seen.}
+  \label{fig:screenshot}
+\end{figure*}
+
+
 \section{Conclusions and Future Work}
 
+\balancecolumns
 \bibliographystyle{abbrv}
 \bibliography{www2013devtrack}
 

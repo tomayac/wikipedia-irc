@@ -18,6 +18,10 @@
 \usepackage{color}
 \newcommand{\todo}[1]{\noindent\textcolor{red}{{\bf \{TODO}: #1{\bf \}}}}
 
+% nicer looking Google+
+\usepackage{xspace}
+\DeclareRobustCommand{\googleplus}{\mbox{Google\hspace{0em}\raisebox{.28ex}{\tiny\bf +}\kern-0.2ex}\xspace}
+
 % listings and Verbatim environment
 \usepackage{fancyvrb}
 \usepackage{relsize}
@@ -73,13 +77,19 @@
 
 \title{MJ no more: Using Concurrent Wikipedia Edit Spikes\\ with Social Network Plausibility Checks\\ to Detect Breaking News}
 
-\numberofauthors{1}\author{
+\numberofauthors{2}\author{
 \alignauthor
 Thomas Steiner\\
 	\affaddr{Google Germany GmbH}\\
 	\affaddr{ABC-Str. 19}\\
 	\affaddr{20354 Hamburg, Germany}\\
-	\email{tomac@google.com}
+	\email{tomac@google.com} 
+\alignauthor
+Ed Summers\\
+	\affaddr{Library of Congress}\\
+	\affaddr{101 Independence Ave, SE}\\
+	\affaddr{Washington, DC 20540, USA}\\
+	\email{edsu@loc.gov}	
 }
 \maketitle
 \begin{abstract}
@@ -107,7 +117,8 @@ and potentially checking plausibility on Wikipedia second,
 the approach proposed in this paper has the advantage of
 being less prone to false-positive alerts, while being equally sensitive
 to true-positive events, however, at only a~fraction of the processing cost.
-A~live demo of our application is available online at the URL \url{http://wikipedia-irc.herokuapp.com/},
+A~live demo of our application is available online
+at the URL \url{http://wikipedia-irc.herokuapp.com/},
 the source code is available
 under the terms of the Apache~2.0 license at 
 \url{https://github.com/tomayac/wikipedia-irc}.
@@ -129,7 +140,8 @@ broke the premature news that the King of Pop Michael Jackson~(MJ) had died,%
 \footnote{MJ dead: \url{http://www.tmz.com/2009/06/25/michael-jackson-dies-death-dead-cardiac-arrest/},
 accessed 02/18/2013}
 the Internet slowed down.%
-\footnote{Internet slow-down: \url{http://news.bbc.co.uk/2/hi/technology/8120324.stm}, accessed 02/18/2013}
+\footnote{Internet slow-down: \url{http://news.bbc.co.uk/2/hi/technology/8120324.stm},
+accessed 02/18/2013}
 Initially, Wikipedia's website administrators started noting abnormal load spikes~%
 \cite{vibber2009currentevents}. Shortly afterwards, caching issues
 caused by a~so-called edit war~\cite{beaumont2009editwar} led the site to go down:
@@ -143,6 +155,7 @@ do not take the site down again, there is without dispute a~lot of research pote
 in analyzing such editing activity.
 
 \subsection{Hypotheses and Research Questions}
+\label{sec:hypotheses-and-research-questions}
 
 In this paper, we present an application that monitors article edits
 of different language versions of Wikipedia in realtime
@@ -191,7 +204,8 @@ at some specific time and place.''}
 Classic streaming analysis of social network microposts so far has been mainly
 focused on Twitter, a~microblogging social network that provides access
 to a~sampled stream of generated microposts by means of its Streaming API.%
-\footnote{Twitter Streaming API: \url{https://dev.twitter.com/docs/api/1.1/get/statuses/sample},
+\footnote{Twitter Streaming API:
+\url{https://dev.twitter.com/docs/api/1.1/get/statuses/sample},
 accessed 02/18/2013}
 Petrovi\'{c} \emph{et~al.} explain~\cite{petrovic2010streamingfirststory}:
 \textit{``in the streaming model of computation,
@@ -206,7 +220,8 @@ The task of linking news events with social media is covered by Tsagkias
 With this paper, we stand on the shoulders\footnote{Hence the title of this paper.}
 of Osborne \emph{et~al.}~%
 \cite{osborne2012bieber}, who use Wikipedia page view statistics%
-\footnote{Page view statistics for Wikimedia projects: \url{http://dumps.wikimedia.org/other/pagecounts-raw/},
+\footnote{Page view statistics for Wikimedia projects:
+\url{http://dumps.wikimedia.org/other/pagecounts-raw/},
 accessed 02/18/2013}
 as a~means to filter spurious events
 stemming from event detection over social network streams.
@@ -244,7 +259,10 @@ Wikimedia projects like Wikipedia.
 A~sample chat message with the components separated
 by the asterisk character \texttt{'*'}
 announcing a~change can be seen in the following.
-\texttt{"[[Juniata River]] http://en.wikipedia.org/w/index.php?diff=516269072&oldid=5146\-59029 * Johanna-Hypatia * (+67) Category:Place names of Native American origin in Pennsylvania"}.
+\texttt{"[[Juniata River]]
+http://en.wikipedia.org/w/index.php?diff=516269072&oldid=5146\-59029 *
+Johanna-Hypatia * (+67)
+Category:Place names of Native American origin in Pennsylvania"}.
 The message components are (i) article name, (ii) revision URL,
 (iii) Wikipedia editor handle, and (iv) change size and change description.
 
@@ -322,7 +340,8 @@ wrapped by  Guillermo Rauch's library Socket.IO%
 \footnote{Socket.IO library: \url{http://socket.io/},
 accessed 02/18/2013}.
 
-\begin{lstlisting}[caption=Pseudocode of the two main event loops of the Wikipedia Live Monitor application,
+\begin{lstlisting}[caption=Pseudocode of the two main event loops
+  of the Wikipedia Live Monitor application,
   label=code:pseudocode, float]
 §\textbf{Input: irc, listening on Wikipedia recent changes}§ 
 §\textbf{Output: breakingNewsCandidates, breaking news candidates}§ 
@@ -380,20 +399,39 @@ timeout.every.240seconds §\textbf{do}§
 
 \section{Premature Evaluation}
 
+As briefly noted earlier, in this paper,
+we do not answer all research questions yet.
+Nevertheless, we extract trends from our experiments so far.
+In \autoref{sec:hypotheses-and-research-questions},
+we have set up three hypotheses.
+(H1) has been proven by Hu \emph{et~al.} in~\cite{hu2012breakingnews} for Twitter.
+We argue that it can be generalized to other social networks
+and invite the reader to have a~look at our dataset,
+where the lively discussions about breaking news candidates
+on the considered social networks Twitter, Facebook, and \googleplus
+support the assumption.
+It is hard to prove (H2), as the concept of \emph{important breaking news}
+is vague and dependent on one's personal background, however,
+all evidence suggests that (H2) indeed holds true,
+as, to the best of our knowledge and given our background,
+what the authors consider \emph{important breaking news}
+is represented on Wikipedia.
+(H3) has been examined by Osborne \emph{et~al.} in~\cite{osborne2012bieber}.
+
+
 \begin{figure*}
   \centering
   \includegraphics[width=1\linewidth]{./wikipedia-live-monitor.png}
-  \caption{Screenshot with
-    an article cluster of four concurrently edited articles (ru, en, pt, ca).
-    All breaking news criteria are fulfilled, the cluster is a breaking news candidate.
+  \caption{Screenshot with an article cluster of four concurrently edited articles
+    (ru, en, pt, ca). All breaking news criteria are fulfilled,
+    the cluster is a breaking news candidate.
     Cross-language social network search results for en and pt can be seen.}
   \label{fig:screenshot}
 \end{figure*}
 
-
 \section{Conclusions and Future Work}
 
-\balancecolumns
+%\balancecolumns
 \bibliographystyle{abbrv}
 \bibliography{www2013devtrack}
 

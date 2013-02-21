@@ -273,7 +273,7 @@ a~platform for the collaborative acquisition and maintenance
 of structured data to be used by
 Wikimedia projects like Wikipedia.
 A~sample chat message with the components separated
-by the asterisk character \texttt{'*'}
+by the asterisk character \texttt{`*'}
 announcing a~change can be seen in the following.
 \texttt{"[[Juniata River]]
 http://en.wikipedia.org/w/index.php?diff=516269072&oldid=5146\-59029 *
@@ -334,7 +334,7 @@ The exact parameters of the breaking news criteria above
 were determined empirically by analyzing Wikipedia edits
 over several hours and repeatedly adjusting the settings until
 major news events happening at the same time were detected.
-The created dataset split in three chunks has been made publicly available.%
+The resulting dataset split in three chunks has been made publicly available.%
 \footnote{Wikipedia Live Monitor dataset: \url{https://www.dropbox.com/sh/2qsg1zhb8p35fxf/Dghn55y0kh},
 accessed 02/18/2013}
 
@@ -353,9 +353,9 @@ of the languages being searched in.
 
 Currently the plausibility checking step is not yet fully automated,
 as the search results are meant to be consumed by a~human evaluator.
-Driven by (H1), we assume breaking news events to be discussed on social networks.
-We will show the details of this argument in \autoref{sec:premature-evaluation},
-for now, we assume social networks to be a~short period ahead of Wikipedia.
+Driven by (H1), we assume breaking news events are being discussed on social networks.
+We will show arguments for this assumption in \autoref{sec:premature-evaluation}.
+For now, we expect social networks to be a~short period ahead of Wikipedia.
 In consequence, if the human rater can find positive evidence
 for a~connection between social network activities and Wikipedia edit actions,
 the breaking news candidate is confirmed to indeed be breaking news.
@@ -403,7 +403,7 @@ irc.on.message §\textbf{do (article)}§
     articleClusters.push(cluster)
     updateStatistics(cluster)
     emit.newCluster(cluster, articleRevs)    
-  §\textit{\# Update existing cluster, article was seen before}§
+  §\textit{\# Update existing cluster, as the article was seen before}§
   §\textbf{else}§
     updateStatistics(cluster)
     emit.existingCluster(cluster, articleRevs)
@@ -466,14 +466,16 @@ for breaking news is more in the range of 30 minutes,
 and for global breaking news like celebrity deaths
 in the range of five minutes and less,
 albeit the edits by our experience will be small and iterative
-(``X is a'' to ``X was a'', or the addition of a~death date).
+(``X is a'' to ``X was a'', or the addition of a~death date),
+followed by more consistent thorough edits.
 
 The at time of writing recent breaking news event
 of the resignation of Pope Benedict XVI helps respond to (Q1).
-The first three edit times of the Pope's English Wikipedia article%
+The three first edit times after the news broke on February 11, 2013
+of the Pope's English Wikipedia article%
 \footnote{Edit history en: \url{http://en.wikipedia.org/w/index.php?title=Pope_Benedict_XVI&action=history},
-accessed 02/18/2013} on February 11, 2013,
-the day of his resignation, are as follows
+accessed 02/18/2013} 
+are as follows
 (all times in UTC): 10:58, 10:59, 11:02.
 The edit times of the French article%
 \footnote{Edit history fr: \url{http://fr.wikipedia.org/w/index.php?title=Beno\%C3\%AEt_XVI&action=history}, accessed 02/18/2013}
@@ -491,8 +493,8 @@ Not all breaking news events have the same global impact as the Pope's resignati
 however, the proposed system was shown to work very reliably
 for smaller events of more regional impact as well, for example,
 when Indian singer Varsha Bhosle committed suicide%
-\footnote{Varsha Bhosle suicide: \url{en.wikipedia.org/wiki/Varsha_Bhosle},
-accessed 02/18/2013} on 8 October 2012.
+\footnote{Varsha Bhosle suicide: \url{http://en.wikipedia.org/wiki/Varsha_Bhosle},
+accessed 02/18/2013} on October 8, 2012.
 A~systematic evaluation of (Q1) compulsorily can only be done by random samples,
 which has turned out positive results so far.
 Again, we invite the reader to explore our dataset and to conduct own experiments.

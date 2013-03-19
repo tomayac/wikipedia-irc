@@ -1,4 +1,5 @@
-\documentclass{sig-alternate}
+%\documentclass{sig-alternate}
+\documentclass{www13-companion-accepted}
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -79,7 +80,8 @@
 
 \numberofauthors{3}\author{
 \alignauthor
-Thomas Steiner\\
+Thomas Steiner\thanks{This work was partially supported by the European Commission
+under Grant No.~248296 FP7 \mbox{I-SEARCH} project.}\\
 	\affaddr{Google Germany GmbH}\\
 	\affaddr{ABC-Str. 19}\\
 	\affaddr{20354 Hamburg, Germany}\\
@@ -100,7 +102,7 @@ Ed Summers\\
 \maketitle
 \begin{abstract}
 \fontencoding{T1}\selectfont
-We have developed an application called Wikipedia Live Monitor
+We have developed an application called \emph{Wikipedia Live Monitor}
 that monitors article edits on different language versions of Wikipedia---%
 as they happen in realtime.
 Wikipedia articles in different languages are highly interlinked.
@@ -114,7 +116,7 @@ the Russian article on the same topic.
 As we monitor multiple language versions of Wikipedia in parallel,
 we can exploit this fact to detect \emph{concurrent edit spikes}
 of Wikipedia articles covering the same topics,
-both in only one and in different languages.
+both in only one, and in different languages.
 We treat such concurrent edit spikes as signals
 for potential breaking news events, whose plausibility we then check 
 with full-text cross-language searches on multiple social networks.
@@ -135,14 +137,16 @@ under the terms of the Apache~2.0 license at
 
 \terms{Algorithms}
 
-\keywords{Breaking News Detection, Wikipedia, Social Networks}
+\keywords{Breaking News Detection, Event Detection, Wikipedia, Social Networks, Internet Relay Chat}
+
+\pagebreak
 
 \section{Introduction}
 
 \subsection{Motivation}
 
 Shortly after the celebrity news website TMZ
-broke the premature news that the King of Pop Michael Jackson~(MJ) had died,%
+broke the premature news that the King of Pop \emph{Michael Jackson}~(MJ) had died,%
 \footnote{MJ dead: \url{http://www.tmz.com/2009/06/25/michael-jackson-dies-death-dead-cardiac-arrest/},
 accessed 02/18/2013}
 the Internet slowed down.%
@@ -154,7 +158,7 @@ caused by a~so-called edit war~\cite{beaumont2009editwar} led the site to go dow
 Wikipedia editors worldwide made concurrent edits
 to the Michael Jackson Wikipedia article, doing and undoing changes
 regarding the tense of the article, death date,
-and the circumstances of the at the time officially still unconfirmed fatality.
+and the circumstances of the (at the time) officially still unconfirmed fatality.
 While Wikipedia engineers have worked hard
 to ensure that future load spikes
 do not take the site down again, there is without dispute a~lot of research potential
@@ -168,9 +172,9 @@ of different language versions of Wikipedia in realtime
 in order to detect concurrent edit spikes that may be the source of
 breaking news events.
 When a~concurrent edit spike has been detected,
-we use full-text searches on social networks
+we use cross-language full-text searches on social networks
 as plausibility checks to filter out false-positive alerts.
-We are driven by the following hypotheses.
+We are led by the following hypotheses.
 
 \begin{itemize}
   \itemsep0em
@@ -195,7 +199,7 @@ We are driven by the following hypotheses.
 
 In this paper, we do not answer all research questions yet,
 however, lay the foundation stone for future research in this area
-by introducing the Wikipedia Live Monitor application.
+by introducing the \emph{Wikipedia Live Monitor} application.
 
 \section{Related Work}
 
@@ -234,8 +238,8 @@ stemming from event detection over social network streams.
 Our approach reverses theirs, however, instead of the only hourly updated
 page view statistics, we use realtime change notifications,
 as explained in \autoref{sec:wikipedia-recent-changes}.
-Wikipedia Live Monitor is partly based on an application called
-Wikistream, developed by Ed Summers \emph{et~al.}, which was described in~%
+Our \emph{Wikipedia Live Monitor} is partly based on an application called
+\emph{Wikistream}, developed by Ed Summers \emph{et~al.}, which was described in~%
 \cite{summers2011odetonode}.
 
 \begin{figure*}[t!]
@@ -250,6 +254,7 @@ Wikistream, developed by Ed Summers \emph{et~al.}, which was described in~%
 
 \section{Implementation Details}
 
+\vspace{-0.5em}
 \subsection{Wikipedia Recent Changes}
 \label{sec:wikipedia-recent-changes}
 
@@ -279,13 +284,13 @@ announcing a~change can be seen in the following.
 http://en.wikipedia.org/w/index.php?diff=516269072&oldid=5146\-59029 *
 Johanna-Hypatia * (+67)
 Category:Place names of Native American origin in Pennsylvania"}.
-The message components are (i) article name, (ii) revision URL,
-(iii) Wikipedia editor handle, and (iv) change size and change description.
+The message components are (i)~article name, (ii)~revision URL,
+(iii)~Wikipedia editor handle, and (iv)~change size and change description.
 
 \subsection{Article Clusters}
 
-We cluster edits of articles about the same topic
-but written in different languages in article clusters.
+We cluster edits of articles about the same topic,
+but written in different languages, in article clusters.
 The example of the English
 \emph{``en:2013\_Russian\_meteor\_event''}
 and the Russian article \fontencoding{T2A}\selectfont
@@ -306,12 +311,12 @@ The URL pattern is as follows.
 This allows us to classify edits in categories, like, \emph{e.g.},
 negligible trivial edits (punctuation correction) and 
 major important edits (new paragraph for an article),
-which allows us to disregard seemingly concurrent edits
+which helps us to disregard seemingly concurrent edits
 in order to avoid false-positive alerts.
 
 \subsection{Breaking News Criteria}
 
-Our application Wikipedia Live Monitor puts  
+Our application \emph{Wikipedia Live Monitor} puts  
 detected article clusters in a~monitoring loop in which they remain
 until their time-to-live (240~seconds) is over.
 In order for an article cluster in the monitoring loop
@@ -331,10 +336,10 @@ the following breaking news criteria have to be fulfilled.
 \end{description}
 
 The exact parameters of the breaking news criteria above
-were determined empirically by analyzing Wikipedia edits
+were \emph{determined empirically} by analyzing Wikipedia edits
 over several hours and repeatedly adjusting the settings until
 major news events happening at the same time were detected.
-The resulting dataset split in three chunks has been made publicly available.%
+The resulting dataset split into three chunks has been made publicly available.%
 \footnote{Wikipedia Live Monitor dataset: \url{https://www.dropbox.com/sh/2qsg1zhb8p35fxf/Dghn55y0kh},
 accessed 02/18/2013}
 
@@ -344,15 +349,15 @@ When a~breaking news candidate has been identified,
 we use cross-language full-text social network searches 
 on the social networks Twitter, Facebook, and \googleplus
 as a~plausibility check.
-As the article titles of all language versions
+As the \emph{article titles} of all language versions
 of the particular article's cluster are know,
-we use them for cross-language searches, as can be seen in \autoref{fig:screenshot}.
+we use these very article titles as search queries for cross-language searches,
+as can be seen in \autoref{fig:screenshot}.
 This approach greatly improves the recall of the social network search,
 however, requires either automatic translation, or an at least basic understanding
 of the languages being searched in.
-
 Currently the plausibility checking step is not yet fully automated,
-as the search results are meant to be consumed by a~human evaluator.
+as the search results are for the time being meant to be consumed by \emph{human evaluators}.
 Driven by (H1), we assume breaking news events are being discussed on social networks.
 We will show arguments for this assumption in \autoref{sec:premature-evaluation}.
 For now, we expect social networks to be a~short period ahead of Wikipedia.
@@ -362,13 +367,13 @@ the breaking news candidate is confirmed to indeed be breaking news.
 
 \subsection{Application Pseudocode}
 
-The Wikipedia Live Monitor application has been implemented in Node.js,
+The \emph{Wikipedia Live Monitor} application has been implemented in Node.js,
 a~server side JavaScript software system
 designed for writing scalable Internet applications.
 Programs are created using event-driven, asynchronous input/output operations
 to minimize overhead and maximize scalability.
 \autoref{code:pseudocode} shows the pseudocode of the two main event loops of the
-Wikipedia Live Monitor application.
+\emph{Wikipedia Live Monitor} application.
 The actual implementation is based on 
 Martyn Smith's Node.js IRC library%
 \footnote{Node.js IRC library: \url{https://github.com/martynsmith/node-irc},
@@ -384,7 +389,6 @@ accessed 02/18/2013}
 §\textbf{Input: irc, listening on Wikipedia recent changes}§ 
 §\textbf{Output: breakingNewsCandidates, breaking news candidates}§ 
 
-§\textbf{init:}§
 
 monitoringLoop = {}
 articleClusters = {}
@@ -466,11 +470,11 @@ for breaking news is more in the range of 30 minutes,
 and for global breaking news like celebrity deaths
 in the range of five minutes and less,
 albeit the edits by our experience will be small and iterative
-(``X is a'' to ``X was a'', or the addition of a~death date),
+(\emph{e.g.}, ``X is a'' to ``X was a'', or the addition of a~death date),
 followed by more consistent thorough edits.
 
-The at time of writing recent breaking news event
-of the resignation of Pope Benedict XVI helps respond to (Q1).
+The (at time of writing) recent breaking news event
+of the resignation of \emph{Pope Benedict~XVI} helps respond to (Q1).
 The three first edit times after the news broke on February 11, 2013
 of the Pope's English Wikipedia article%
 \footnote{Edit history en: \url{http://en.wikipedia.org/w/index.php?title=Pope_Benedict_XVI&action=history},
@@ -489,51 +493,53 @@ accessed 02/18/2013} the news at 10:59.
 Vatican Radio's announcement%
 \footnote{Vatican Radio announces Pope resignation: \url{http://de.radiovaticana.va/Articolo.asp?c=663810},
 accessed 02/18/2013} was made at 10:57:47.
+
 Not all breaking news events have the same global impact as the Pope's resignation,
 however, the proposed system was shown to work very reliably
-for smaller events of more regional impact as well, for example,
-when Indian singer Varsha Bhosle committed suicide%
+also for smaller events of more regional impact, for example,
+when \emph{Indian singer Varsha Bhosle} committed suicide%
 \footnote{Varsha Bhosle suicide: \url{http://en.wikipedia.org/wiki/Varsha_Bhosle},
 accessed 02/18/2013} on October 8, 2012.
-A~systematic evaluation of (Q1) compulsorily can only be done by random samples,
+A~systematic evaluation of (Q1)~compulsorily can only be done by random samples,
 which has turned out positive results so far.
 Again, we invite the reader to explore our dataset and to conduct own experiments.
 A~systematic evaluation of (Q2) requires a~commonly shared dataset,
-which we have provided, however, at this point we do not have access to the system
+which we have provided, however, at this point in time, we do not have access to the system
 of Osborne \emph{et~al.}
 
-Regarding Wikipedia Live Monitor's scalability, we could scale the monitoring system
+Regarding \emph{Wikipedia Live Monitor}'s scalability, we could scale the monitoring system
 up to currently \emph{all} 284~Wikipedias on a~standard consumer laptop
 (mid-2010 MacBook Pro, 2.66~GHz Intel Core~2, 8~GB RAM),
 which once more proves the efficiency of the Node.js architecture
 for this kind of event-driven applications.
 In practice, however, the majority of the smaller Wikipedias being very rarely updated,
-we limit ourselves to the Wikipedias with 100,000 articles and more
+we limit ourselves to the Wikipedias with $\geq$~100,000 articles
 at no remarkable loss of recall.
 
 \section{Future Work}
 
-Future work will mainly address two areas.
-First, the automatic categorization of edits on Wikipedia needs to be more fine-grained.
+Future work towards a~thorough scientific evaluation will mainly address two areas.
+First, the \emph{automatic categorization of edits on Wikipedia}
+needs to be more fine-grained.
 In the context of breaking news detection, not all edits are equally useful.
 An image being added to an article is an example of an edit
 that usually will not be important.
 In contrast, the category ``Living people'' being removed from an article
 is a~strong indicator of breaking (sad) news.
-Second, the connection between social network search and Wikipedia edits
+Second, the \emph{connection between social network search and Wikipedia edits}
 needs to be made clearer. 
-In an initial step, the concrete changes to an article as detailed in
-\autoref{sec:comparing-article-revisions} can be compared with
+In an initial step, the concrete changes to an article, as detailed in
+\autoref{sec:comparing-article-revisions}, can be compared with
 social network microposts using a~cosine similarity measure.
 More advanced steps can exploit the potential knowledge from Wikipedia edits
 (\emph{e.g.}, category ``Living people'' removed implies a~fatality).
 
 \section{Conclusions}
 
-In this paper, we have shown an application called Wikipedia Live Monitor
+In this paper, we have shown an application called \emph{Wikipedia Live Monitor}
 and released its source code under the Apache~2.0 license.
 This application monitors article edits on 42 different language versions of Wikipedia.
-It detects breaking news candidates according to well-defined breaking news criteria
+It detects breaking news candidates according to well-defined breaking news criteria,
 whose exact parameters were determined empirically
 and the corresponding dataset made available publicly.
 We have shown how cross-language full-text social network searches are used

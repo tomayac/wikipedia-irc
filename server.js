@@ -198,7 +198,7 @@ function monitorWikipedia() {
 
         // new article
         if (!articleVersionsMap[article]) {
-          now = new Date().getTime();
+          now = Date.now();
           articles[article] = {
             timestamp: now,
             occurrences: 1,
@@ -231,7 +231,7 @@ function monitorWikipedia() {
         // existing article
         } else {
           var currentArticle = article;
-          now = new Date().getTime();
+          now = Date.now();
           if (article !== articleVersionsMap[article]) {
             io.sockets.emit('merging', {
               current: article,
@@ -476,7 +476,7 @@ io.sockets.on('connection', function(socket) {
 // clean-up function, called regularly like a garbage collector
 function cleanUpMonitoringLoop() {
   for (var key in articles) {
-    var now = new Date().getTime();
+    var now = Date.now();
     if (now - articles[key].timestamp > SECONDS_SINCE_LAST_EDIT * 1000) {
       delete articles[key];
       for (version in articleClusters[key]) {
@@ -507,4 +507,5 @@ monitorWikipedia();
 
 // start the server
 var port = process.env.PORT || 8080;
+console.log('Wikipedia Live Monitor running on port ' + port);
 server.listen(port);

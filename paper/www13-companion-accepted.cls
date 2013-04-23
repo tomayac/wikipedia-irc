@@ -99,7 +99,7 @@
 %%% You may turn this hackery off via the -e option:
 %%%     dvips -e 0 foo.dvi >foo.ps
 %%%
-\typeout{Document Class 'www2012-accepted From www-release by ACM}
+\typeout{Document Class 'www2013-accepted From www-release by ACM}
 \typeout{Based in part upon document Style `acmconf' <22 May 89>. Hacked 4/91 by}
 \typeout{shivers@cs.cmu.edu, 4/93 by theobald@cs.mcgill.ca}
 \typeout{Excerpts were taken from (Journal Style) 'esub2acm.cls'.}
@@ -600,7 +600,7 @@
 
 \if@ll
   \NeedsTeXFormat{LaTeX2e}
-  \ProvidesClass{www2013-accepted} [2012/01/26 V2.0 based on sig-alt-release.cls]
+  \ProvidesClass{www2012-accepted} [2012/01/26 V2.0 based on sig-alt-release.cls]
   \RequirePackage{latexsym}% QUERY: are these two really needed?
   \let\dooptions\ProcessOptions
 \else

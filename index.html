@@ -79,12 +79,12 @@
     <small>
       <div id="stats"></div>
       <div>
-        Proudly Developed In Europe By <strong>Thomas Steiner</strong>
+        Proudly developed in Europe by <strong>Thomas Steiner</strong>
         (<a href="mailto:tomac@google.com">tomac@google.com</a>)
         <br/>
-        <strong>It's Open Source</strong> and
-        <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a> Licensed
-        (<a href="https://github.com/tomayac/wikipedia-irc">Fork This Project On GitHub</a>)
+        <strong>It's open source</strong> and
+        <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a> licensed
+        (<a href="https://github.com/tomayac/wikipedia-irc">Fork this project on GitHub</a>)
       </div>
     </small>
 
@@ -175,7 +175,7 @@
         firstTimeSeen.innerHTML +=
             '<li style="overflow:hidden;height:3em;" class="article-cluster">' +
               '<strong class="title">' + linkifyTitle(data.article) +
-              '</strong> (' + humaneDate(data.timestamp) + ')' +
+              '</strong> (' + humaneDate(new Date(data.timestamp)) + ')' +
               '<br/><b>Editor:</b> ' + data.editors.map(linkifyEditor) +
             '</li>';
       }
@@ -189,7 +189,7 @@
             '<li style="overflow:hidden;height:3em;" class="article-cluster">' +
               '<strong>' + linkifyTitle(data.current) + '</strong> with ' +
               '<strong>' + linkifyTitle(data.existing) + '</strong> ' +
-              '(' + humaneDate(data.timestamp) + ')' +
+              '(' + humaneDate(new Date(data.timestamp)) + ')' +
             '</li>';
       }
 
@@ -236,7 +236,7 @@
               linkifyTitle(versions[languagesArray[i].language]);
         }
         var socialHtml = '<ul class="social-network-results">';
-        var now = new Date().getTime();
+        var now = Date.now();
         for (var term in data.socialNetworksResults) {
           // only append the term if microposts exist. need to iterate over all
           // networks and check the freshness. ugly, but works.
@@ -280,7 +280,7 @@
                       network.toLowerCase() + '.png"/> <small><a href="' +
                       item.profileLink + '">' +
                       item.user + '</a> (<a href="' + item.deepLink + '">' +
-                      humaneDate(item.creationDate) +
+                      humaneDate(new Date(item.creationDate)) +
                       '</a>): ' + micropost.replace(
                           new RegExp('(' + preg_quote(term) + ')', 'gi'),
                           '<span style="background-color: yellow;">$1</span>') +
@@ -297,7 +297,7 @@
             '<li class="article-cluster">' +
               '<strong class="' + (isBreakingNews ? 'breaking' : '') + '">' +
               linkifyTitle(versions[languagesArray[0].language]) +
-              '</strong> (' + humaneDate(data.timestamp) + ')' +
+              '</strong> (' + humaneDate(new Date(data.timestamp)) + ')' +
               '<br/><b>Versions:</b> ' + versionsHtml +
               '<br/><b>Conditions:</b> <span class="condition">' +
               '≥ ' + document.querySelector('#breakingNewsThreshold').value +
@@ -327,7 +327,7 @@
               formatLanguages(languagesArray) +
               '<br/><b>Last Changes:</b> ' +
               Object.keys(data.changes).slice(-5).map(function(timestamp) {
-                var humane = humaneDate(new Date(parseInt(timestamp, 10)));
+                var humane = humaneDate(new Date(timestamp));
                 var url = data.changes[timestamp].diffUrl;
                 if (url) {
                   return '<a class="changes" href="' + url + '">' + humane +
@@ -336,7 +336,8 @@
                       data.changes[timestamp].delta + ')';
                 } else {
                   return '<span class="new-page">newly created ' + humane +
-                      '</span> ' + data.changes[timestamp].editor.split(':')[1] +
+                      '</span> ' +
+                      data.changes[timestamp].editor.split(':')[1] +
                       ' (<b>' + data.changes[timestamp].language + '</b>, ' +
                       data.changes[timestamp].delta + ')';
                 }
@@ -474,6 +475,7 @@
         }, false);
 
         var socket = io.connect('http://wikipedia-irc.herokuapp.com/');
+        // var socket = io.connect('http://localhost:8080/');
 
         socket.on('defaultSettings', function(data) {
           document.querySelector('#secondsSinceLastEdit')

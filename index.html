@@ -280,7 +280,7 @@
                       network.toLowerCase() + '.png"/> <small><a href="' +
                       item.profileLink + '">' +
                       item.user + '</a> (<a href="' + item.deepLink + '">' +
-                      humaneDate(new Date(item.creationDate)) +
+                      humaneDate(new Date(item.timestamp)) +
                       '</a>): ' + micropost.replace(
                           new RegExp('(' + preg_quote(term) + ')', 'gi'),
                           '<span style="background-color: yellow;">$1</span>') +

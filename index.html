@@ -474,8 +474,8 @@
           this.parentNode.style.display = 'none';
         }, false);
 
-        //var socket = io.connect('http://wikipedia-irc.herokuapp.com/');
-         var socket = io.connect('http://localhost:8080/');
+        var socket = io.connect('http://wikipedia-irc.herokuapp.com/');
+        // var socket = io.connect('http://localhost:8080/');
 
         socket.on('defaultSettings', function(data) {
           document.querySelector('#secondsSinceLastEdit')

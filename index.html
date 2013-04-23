@@ -327,7 +327,7 @@
               formatLanguages(languagesArray) +
               '<br/><b>Last Changes:</b> ' +
               Object.keys(data.changes).slice(-5).map(function(timestamp) {
-                var humane = humaneDate(new Date(timestamp));
+                var humane = humaneDate(new Date(parseInt(timestamp, 10)));
                 var url = data.changes[timestamp].diffUrl;
                 if (url) {
                   return '<a class="changes" href="' + url + '">' + humane +
@@ -377,7 +377,7 @@
       function logStats(data) {
         var stats = document.querySelector('#stats');
         stats.innerHTML =
-            '<strong>Article Clusters In the Monitoring Loop:</strong> ' +
+            '<strong>Article clusters in the monitoring loop:</strong> ' +
             data.clustersLeft;
       }
 
@@ -474,8 +474,8 @@
           this.parentNode.style.display = 'none';
         }, false);
 
-        var socket = io.connect('http://wikipedia-irc.herokuapp.com/');
-        // var socket = io.connect('http://localhost:8080/');
+        //var socket = io.connect('http://wikipedia-irc.herokuapp.com/');
+         var socket = io.connect('http://localhost:8080/');
 
         socket.on('defaultSettings', function(data) {
           document.querySelector('#secondsSinceLastEdit')

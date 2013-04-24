@@ -6,6 +6,8 @@ var app = express();
 var server = http.createServer(app);
 var io = require('socket.io').listen(server);
 var socialNetworkSearch = require('./social-network-search.js');
+var config = require('./config.js');
+var twitter = require('ntwitter');
 
 // verbous debug mode
 var VERBOUS = false;
@@ -42,6 +44,29 @@ var DISCARD_WIKIPEDIA_BOTS = true;
 // IRC details for the recent changes live updates
 var IRC_SERVER = 'irc.wikimedia.org';
 var IRC_NICK = 'wikipedia-live-monitor';
+
+// the maximum length of http://t.co links
+var TWITTER_SHORT_URL_LENGTH = 23;
+
+// if enabled, breaking news candidates will be tweeted
+var TWEET_BREAKING_NEWS_CANDIDATES = true;
+
+if (TWEET_BREAKING_NEWS_CANDIDATES) {
+  var twit = new twitter({
+    consumer_key: config.twitter_consumer_key,
+    consumer_secret: config.twitter_consumer_secret,
+    access_token_key: config.twitter_access_token_key,
+    access_token_secret: config.twitter_access_token_secret
+  });
+
+  twit.verifyCredentials(function(err, data) {
+    if (err) {
+      console.log('Twitter authentication error: ' + err);
+    }
+  });
+
+  var recentTweetsBuffer = [];
+}
 
 // IRC rooms are of the form #lang.wikipedia
 // the list of languages is here:
@@ -369,6 +394,14 @@ function monitorWikipedia() {
                 },
                 socialNetworksResults: socialNetworksResults
               });
+              if (TWEET_BREAKING_NEWS_CANDIDATES) {
+                tweet(
+                    article,
+                    articles[article].occurrences,
+                    articles[article].editors.length,
+                    Object.keys(articles[article].languages).length,
+                    socialNetworksResults);
+              }
               if (VERBOUS) {
                 console.log('[ ★ ] Breaking news candidate: "' +
                     article + '". ' +
@@ -494,6 +527,69 @@ function cleanUpMonitoringLoop() {
   }
   io.sockets.emit('stats', {
     clustersLeft: Object.keys(articleClusters).length
+  });
+}
+
+function tweet(article, occurrences, editors, languages, microposts) {
+  var components = article.split(':');
+  var wikipediaUrl = 'http://' + components[0] +
+      '.wikipedia.org/wiki/' + encodeURIComponent(components[1]);
+  // if we have already tweeted the current URL, don't tweet it again
+  if (recentTweetsBuffer.indexOf(wikipediaUrl) !== -1) {
+    console.log('Already tweeted about ' + wikipediaUrl);
+    return;
+  }
+  // keep the recent tweets buffer at most 10 elements long
+  recentTweetsBuffer.push(wikipediaUrl);
+  if (recentTweetsBuffer.length > 10) {
+    recentTweetsBuffer.shift();
+  }
+  console.log('Recent tweets buffer length: ' + recentTweetsBuffer.length);
+
+  var socialUpdates = [];
+  var now = Date.now();
+  for (var term in microposts) {
+    var posts = microposts[term];
+    for (var network in posts) {
+      var results = posts[network];
+      if (Array.isArray(results)) {
+        for (var i = 0, len = results.length; i < len; i++) {
+          // not older than 1h: 1 * 60 * 60 * 1000 = 3,600,000
+          if (now - results[i].timestamp < 3600000) {
+            socialUpdates.push(results[i].deepLink);
+          }
+        }
+      }
+    }
+  }
+  var shuffle = function(o) {
+    for(var j, x, i = o.length; i; j = parseInt(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
+    return o;
+  };
+  socialUpdates = shuffle(socialUpdates);
+  var text = 'Breaking News Candidate: ' + wikipediaUrl +
+      ' [Edits: ' + occurrences +
+      ', Editors: ' + editors +
+      ', Langs: ' + languages +
+      ', Stories: ';
+  if (socialUpdates.length) {
+    var urlRegEx = /\b((?:[a-z][\w-]+:(?:\/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}\/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'".,<>?«»“”‘’]))/ig;
+    var pseudoShortLink = 'http://t.co/' +
+        new Array(TWITTER_SHORT_URL_LENGTH - 11).join('x');
+    var previewTweet = text.replace(urlRegEx, pseudoShortLink);
+    for (var i = previewTweet.length, j = 0, len = socialUpdates.length; i < 138 && j < len; i += TWITTER_SHORT_URL_LENGTH + 2, j++) {
+      previewTweet += (j > 0 ? ', ' + socialUpdates[j].replace(urlRegEx, pseudoShortLink) : socialUpdates[j].replace(urlRegEx, pseudoShortLink));
+      text += (j > 0 ? ', ' + socialUpdates[j] : socialUpdates[j]);
+    }
+    text += ']';
+  } else {
+    text += 'N/A]';
+  }
+  console.log('Tweeting: ' + text);
+  twit.updateStatus(text, function (err, data) {
+    if (err) {
+      console.log('Tweet error: ' + err);
+    }
   });
 }
 

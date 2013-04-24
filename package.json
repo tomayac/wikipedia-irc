@@ -5,7 +5,8 @@
     "express": "3.0.x",
     "irc": "0.3.x",
     "request": "2.11.x",
-    "socket.io": "0.9.x"
+    "socket.io": "0.9.x",
+    "ntwitter": "0.5.x"
   },
   "engines": {
     "node": "0.8.x",

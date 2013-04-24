@@ -7,3 +7,4 @@
 *.pdf
 *.synctex.gz
 .DS_Store
+config.json

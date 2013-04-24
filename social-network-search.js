@@ -1,11 +1,11 @@
 var request = require('request');
+var config = require('./config.js');
 
 // Google+: https://developers.google.com/+/api/latest/activities/search
 // Facebook: https://developers.facebook.com/docs/reference/api/#searching
 // Twitter: https://dev.twitter.com/docs/api/1/get/search
 
 // global configuration data
-var GOOGLE_KEY = 'AIzaSyC5GxhDFxBHTKCLNMYtYm6o1tiagi65Ufc';
 var MAX_RESULTS = 2;
 
 // triggers realtime search on several social networks
@@ -16,7 +16,7 @@ var socialNetworkSearch = function(terms, callback) {
       var query = 'query=' + encodeURIComponent('"' + term + '"');
       var maxResults = '&maxResults=' + MAX_RESULTS;
       var orderBy = '&orderBy=recent';
-      var key = '&key=' + GOOGLE_KEY;
+      var key = '&key=' + config.google_key;
       url += query + maxResults + orderBy + key;
       request.get(url, function(error, response, body) {
         if (!error && response.statusCode == 200) {

@@ -1,5 +1,4 @@
 var request = require('request');
-var config = require('./config.js');
 
 // Google+: https://developers.google.com/+/api/latest/activities/search
 // Facebook: https://developers.facebook.com/docs/reference/api/#searching
@@ -16,7 +15,7 @@ var socialNetworkSearch = function(terms, callback) {
       var query = 'query=' + encodeURIComponent('"' + term + '"');
       var maxResults = '&maxResults=' + MAX_RESULTS;
       var orderBy = '&orderBy=recent';
-      var key = '&key=' + config.google_key;
+      var key = '&key=' + process.env.GOOGLE_KEY;
       url += query + maxResults + orderBy + key;
       request.get(url, function(error, response, body) {
         if (!error && response.statusCode == 200) {

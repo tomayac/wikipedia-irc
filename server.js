@@ -6,7 +6,6 @@ var app = express();
 var server = http.createServer(app);
 var io = require('socket.io').listen(server);
 var socialNetworkSearch = require('./social-network-search.js');
-var config = require('./config.js');
 var twitter = require('ntwitter');
 
 // verbous debug mode
@@ -53,10 +52,10 @@ var TWEET_BREAKING_NEWS_CANDIDATES = false;
 
 if (TWEET_BREAKING_NEWS_CANDIDATES) {
   var twit = new twitter({
-    consumer_key: config.twitter_consumer_key,
-    consumer_secret: config.twitter_consumer_secret,
-    access_token_key: config.twitter_access_token_key,
-    access_token_secret: config.twitter_access_token_secret
+    consumer_key: process.env.TWITTER_CONSUMER_KEY,
+    consumer_secret: process.env.TWITTER_CONSUMER_SECRET,
+    access_token_key: process.env.TWITTER_ACCESS_TOKEN_KEY,
+    access_token_secret: process.env.TWITTER_ACCESS_TOKEN_SECRET
   });
 
   twit.verifyCredentials(function(err, data) {

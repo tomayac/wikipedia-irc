@@ -436,6 +436,7 @@
               // return result
               return r;
             };
+        Date.now || (Date.now = function() { return +new Date });
 
         var secondsSinceLastEdit =
             document.querySelector('#secondsSinceLastEdit');

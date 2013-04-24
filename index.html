@@ -414,6 +414,13 @@
       }
 
       (function init() {
+        // for old Android browsers
+        if(!Array.isArray) {
+          Array.isArray = function (vArg) {
+            return Object.prototype.toString.call(vArg) === "[object Array]";
+          };
+        }
+
         var secondsSinceLastEdit =
             document.querySelector('#secondsSinceLastEdit');
         var secondsSinceLastEditValue =
@@ -475,8 +482,8 @@
           this.parentNode.style.display = 'none';
         }, false);
 
-        // var socket = io.connect('http://wikipedia-irc.herokuapp.com/');
-        var socket = io.connect('http://localhost:8080/');
+        var socket = io.connect('http://wikipedia-irc.herokuapp.com/');
+        // var socket = io.connect('http://localhost:8080/');
 
         socket.on('defaultSettings', function(data) {
           document.querySelector('#secondsSinceLastEdit')

@@ -49,7 +49,7 @@ var IRC_NICK = 'wikipedia-live-monitor';
 var TWITTER_SHORT_URL_LENGTH = 23;
 
 // if enabled, breaking news candidates will be tweeted
-var TWEET_BREAKING_NEWS_CANDIDATES = true;
+var TWEET_BREAKING_NEWS_CANDIDATES = false;
 
 if (TWEET_BREAKING_NEWS_CANDIDATES) {
   var twit = new twitter({

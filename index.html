@@ -176,7 +176,9 @@
         firstTimeSeen.innerHTML +=
             '<li style="overflow:hidden;height:3em;" class="article-cluster">' +
               '<strong class="title">' + linkifyTitle(data.article) +
-              '</strong> (' + humaneDate(new Date(data.timestamp)) + ')' +
+              '</strong> (<span class="humaneDate" data-timestamp="' +
+              data.timestamp + '">' +
+              humaneDate(new Date(data.timestamp)) + '</span>)' +
               '<br/><b>Editor:</b> ' + data.editors.map(linkifyEditor) +
             '</li>';
       }
@@ -190,7 +192,9 @@
             '<li style="overflow:hidden;height:3em;" class="article-cluster">' +
               '<strong>' + linkifyTitle(data.current) + '</strong> with ' +
               '<strong>' + linkifyTitle(data.existing) + '</strong> ' +
-              '(' + humaneDate(new Date(data.timestamp)) + ')' +
+              '(<span class="humaneDate" data-timestamp="' +
+              data.timestamp + '">' +
+              humaneDate(new Date(data.timestamp)) + '</span>)' +
             '</li>';
       }
 
@@ -281,8 +285,10 @@
                       network.toLowerCase() + '.png"/> <small><a href="' +
                       item.profileLink + '">' +
                       item.user + '</a> (<a href="' + item.deepLink + '">' +
+                      '<span class="humaneDate" data-timestamp="' +
+                      item.timestamp + '">' +
                       humaneDate(new Date(item.timestamp)) +
-                      '</a>): ' + micropost.replace(
+                      '</span></a>): ' + micropost.replace(
                           new RegExp('(' + preg_quote(term) + ')', 'gi'),
                           '<span style="background-color: yellow;">$1</span>') +
                       '</small>';
@@ -298,7 +304,9 @@
             '<li class="article-cluster">' +
               '<strong class="' + (isBreakingNews ? 'breaking' : '') + '">' +
               linkifyTitle(versions[languagesArray[0].language]) +
-              '</strong> (' + humaneDate(new Date(data.timestamp)) + ')' +
+              '</strong> (<span class="humaneDate" data-timestamp="' +
+              data.timestamp + '">' +
+              humaneDate(new Date(data.timestamp)) + '</span>)' +
               '<br/><b>Versions:</b> ' + versionsHtml +
               '<br/><b>Conditions:</b> <span class="condition">' +
               '≥ ' + document.querySelector('#breakingNewsThreshold').value +
@@ -331,8 +339,11 @@
                 var humane = humaneDate(new Date(parseInt(timestamp, 10)));
                 var url = data.changes[timestamp].diffUrl;
                 if (url) {
-                  return '<a class="changes" href="' + url + '">' + humane +
-                      '</a> ' + data.changes[timestamp].editor.split(':')[1] +
+                  return '<a class="changes" href="' + url + '">'
+                      '<span class="humaneDate" data-timestamp="' +
+                      parseInt(timestamp, 10) + '">' + humane +
+                      '</span></a> ' +
+                      data.changes[timestamp].editor.split(':')[1] +
                       ' (<b>' + data.changes[timestamp].language + '</b>, ' +
                       data.changes[timestamp].delta + ')';
                 } else {
@@ -544,6 +555,13 @@
 
         socket.on('stats', function(data) {
           logStats(data);
+          // update humane dates for all timestamped items
+          var timestamps = document.querySelectorAll('.humaneDate');
+          for (var i = 0, len = timestamps.length; i < len; i++) {
+            var timestamp =
+                humaneDate(new Date(timestamps[i].dataset.timestamp));
+            timestamps[i].innerHTML = timestamp;
+          }
         });
       })();
 

@@ -286,7 +286,7 @@
                       item.profileLink + '">' +
                       item.user + '</a> (<a href="' + item.deepLink + '">' +
                       '<span class="humaneDate" data-timestamp="' +
-                      item.timestamp + '">' +
+                      new Date(item.timestamp) + '">' +
                       humaneDate(new Date(item.timestamp)) +
                       '</span></a>): ' + micropost.replace(
                           new RegExp('(' + preg_quote(term) + ')', 'gi'),

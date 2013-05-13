@@ -510,10 +510,7 @@
           this.parentNode.style.display = 'none';
         }, false);
 
-        var protocol = 'https:' === document.location.protocol ?
-            'https' : 'http';
-        var socket = io.connect(protocol + '://wikipedia-irc.herokuapp.com/');
-        // var socket = io.connect(protocol + '://localhost:8080/');
+        var socket = io.connect(document.location.href);
 
         socket.on('defaultSettings', function(data) {
           document.querySelector('#secondsSinceLastEdit')

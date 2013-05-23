@@ -27,7 +27,7 @@
       </div>
 
       <div class="settings">
-        <input id="secondsBetweenEdits" type="range" min="10" max="240" step="10" />
+        <input id="secondsBetweenEdits" type="range" min="10" max="300" step="10" />
         <span class="value" id="secondsBetweenEditsValue"></span>
         <label for="secondsBetweenEdits">Seconds Between Edits</label>
         <br/>
@@ -81,7 +81,12 @@
 
     <hr size="1"/>
     <small>
-      <div id="stats"></div>
+      <div>
+        <strong>Article clusters in the monitoring loop:</strong>
+        <span id="stats"></span>
+        <strong>Articles edited per second:</strong>
+        <span id="editsPerSecond"></span>
+      </div>
       <div>
         Proudly developed in Europe by <strong>Thomas Steiner</strong>
         (<a href="mailto:tomac@google.com">tomac@google.com</a>)
@@ -96,9 +101,9 @@
       var reset = document.querySelector('#reset');
       reset.addEventListener('click', function(e) {
         document.querySelector('#secondsSinceLastEdit')
-        .value = 240;
+        .value = 300;
         document.querySelector('#secondsSinceLastEditValue')
-        .innerHTML = 240;
+        .innerHTML = 300;
 
         document.querySelector('#secondsBetweenEdits')
         .value = 60;
@@ -171,8 +176,8 @@
         return html;
       }
 
+      var firstTimeSeen = document.querySelector('#firstTimeSeen');
       function logFirstTimeSeen(data) {
-        var firstTimeSeen = document.querySelector('#firstTimeSeen');
         if (firstTimeSeen.childNodes.length >= 1) {
           firstTimeSeen.removeChild(firstTimeSeen.firstChild);
         }
@@ -186,8 +191,8 @@
             '</li>';
       }
 
+      var merging = document.querySelector('#merging');
       function logMerging(data) {
-        var merging = document.querySelector('#merging');
         if (merging.childNodes.length >= 1) {
           merging.removeChild(merging.firstChild);
         }
@@ -363,8 +368,8 @@
         return html;
       }
 
+      var nTimesSeen = document.querySelector('#nTimesSeen');
       function logNTimesSeen(data) {
-        var nTimesSeen = document.querySelector('#nTimesSeen');
         if (nTimesSeen.childNodes.length >= 3) {
           nTimesSeen.removeChild(nTimesSeen.firstChild);
         }
@@ -375,9 +380,9 @@
         attachClickHandler();
       }
 
+      var breakingNewsCandidate =
+          document.querySelector('#breakingNewsCandidates');
       function logBreakingNewsCandidate(data) {
-        var breakingNewsCandidate =
-            document.querySelector('#breakingNewsCandidates');
         if (breakingNewsCandidate.childNodes.length >= 3) {
           breakingNewsCandidate.removeChild(breakingNewsCandidate.firstChild);
         }
@@ -389,11 +394,9 @@
         attachClickHandler();
       }
 
+      var stats = document.querySelector('#stats');
       function logStats(data) {
-        var stats = document.querySelector('#stats');
-        stats.innerHTML =
-            '<strong>Article clusters in the monitoring loop:</strong> ' +
-            data.clustersLeft;
+        stats.innerHTML = data.clustersLeft;
       }
 
       function attachClickHandler() {
@@ -537,7 +540,15 @@
           .innerHTML = data.numberOfConcurrentEditors;
         });
 
+        var editsPerSecondCounter = 0;
+        var editsPerSecond = document.querySelector('#editsPerSecond');
+        setInterval(function() {
+          editsPerSecond.innerHTML = editsPerSecondCounter;
+          editsPerSecondCounter = 0;
+        }, 1000);
+
         socket.on('firstTimeSeen', function(data) {
+          editsPerSecondCounter++;
           logFirstTimeSeen(data);
         });
 

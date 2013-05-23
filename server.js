@@ -25,7 +25,7 @@ var USER_AGENT = 'Wikipedia Live Monitor * IRC nick: wikipedia-live-monitor * Co
 
 // an article cluster is thrown out of the monitoring loop if its last edit is
 // longer ago than SECONDS_SINCE_LAST_EDIT seconds
-var SECONDS_SINCE_LAST_EDIT = 240;
+var SECONDS_SINCE_LAST_EDIT = 300;
 
 // an article cluster may have at max SECONDS_BETWEEN_EDITS seconds in between
 // edits in order to be regarded a breaking news candidate

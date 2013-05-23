@@ -101,6 +101,14 @@ DIV.settings {
   padding: 0.5em;
 }
 
+#followCallToAction {
+  font-size: 0.7em;
+  background-color: yellow;
+  position: absolute;
+  top: 25px;
+  right: 400px;
+}
+
 #followWidget {
   position: absolute;
   top: 20px;

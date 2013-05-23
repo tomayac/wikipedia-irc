@@ -17,6 +17,9 @@ var REALLY_VERBOUS = false;
 // or also the 100,000+ articles Wikipedias.
 var MONITOR_LONG_TAIL_WIKIPEDIAS = true;
 
+// whether to also monitor the << 100,000+ articles Wikipedias
+var MONITOR_REALLY_LONG_TAIL_WIKIPEDIAS = true;
+
 // required for Wikipedia API
 var USER_AGENT = 'Wikipedia Live Monitor * IRC nick: wikipedia-live-monitor * Contact: tomac(a)google.com.';
 
@@ -43,6 +46,7 @@ var DISCARD_WIKIPEDIA_BOTS = true;
 // IRC details for the recent changes live updates
 var IRC_SERVER = 'irc.wikimedia.org';
 var IRC_NICK = 'wikipedia-live-monitor';
+var IRC_REAL_NAME_AND_CONTACT = 'Thomas Steiner (tomac@google.com)';
 
 // the maximum length of http://t.co links
 var TWITTER_SHORT_URL_LENGTH = 23;
@@ -60,7 +64,7 @@ if (TWEET_BREAKING_NEWS_CANDIDATES) {
 
   twit.verifyCredentials(function(err, data) {
     if (err) {
-      console.log('Twitter authentication error: ' + err);
+      console.warn('Twitter authentication error: ' + err);
     }
   });
 
@@ -74,49 +78,311 @@ if (TWEET_BREAKING_NEWS_CANDIDATES) {
 var millionPlusLanguages = {
   en: true,
   de: true,
+  nl: true,
   fr: true,
-  nl: true
+  it: true,
+  es: true,
+  ru: true
 };
 
 // http://meta.wikimedia.org/wiki/List_of_Wikipedias#100_000.2B_articles
 var oneHundredThousandPlusLanguages = {
-  it: true,
+  sv: true,
   pl: true,
-  es: true,
-  ru: true,
   ja: true,
   pt: true,
   zh: true,
   vi: true,
-  sv: true,
   uk: true,
   ca: true,
   no: true,
+  war: true,
+  ceb: true,
   fi: true,
-  cs: true,
   fa: true,
+  cs: true,
   hu: true,
-  ro: true,
   ko: true,
   ar: true,
+  ro: true,
+  ms: true,
   tr: true,
   id: true,
+  kk: true,
+  sr: true,
   sk: true,
   eo: true,
   da: true,
-  kk: true,
-  sr: true,
   lt: true,
-  ms: true,
-  he: true,
   eu: true,
   bg: true,
-  sl: true,
-  vo: true,
+  he: true,
   hr: true,
-  war: true,
+  sl: true,
+  uz: true,
+  vo: true,
+  et: true,
   hi: true,
-  et: true
+  nn: true,
+  gl: true
+};
+
+var tenThousandPlusLanguages = {
+  simple: true,
+  az: true,
+  la: true,
+  el: true,
+  sh: true,
+  th: true,
+  ka: true,
+  mk: true,
+  oc: true,
+  new: true,
+  pms: true,
+  tl: true,
+  be: true,
+  ta: true,
+  ht: true,
+  te: true,
+  'be-x-old': true,
+  cy: true,
+  lv: true,
+  bs: true,
+  br: true,
+  sq: true,
+  hy: true,
+  tt: true,
+  jv: true,
+  mg: true,
+  mr: true,
+  lb: true,
+  is: true,
+  my: true,
+  ml: true,
+  yo: true,
+  ba: true,
+  an: true,
+  lmo: true,
+  af: true,
+  fy: true,
+  pnb: true,
+  bn: true,
+  sw: true,
+  bpy: true,
+  io: true,
+  ky: true,
+  ur: true,
+  ne: true,
+  scn: true,
+  'zh-yue': true,
+  gu: true,
+  nds: true,
+  ga: true,
+  ku: true,
+  ast: true,
+  qu: true,
+  su: true,
+  cv: true,
+  sco: true,
+  als: true,
+  ia: true,
+  nap: true,
+  bug: true,
+  'bat-smg': true,
+  kn: true,
+  'map-bms': true,
+  wa: true,
+  am: true,
+  ckb: true,
+  gd: true,
+  hif: true,
+  'zh-min-nan': true,
+  tg: true,
+  arz: true,
+  mzn: true,
+  yi: true,
+  vec: true
+};
+
+var thousandPlusLanguages = {
+  mn: true,
+  nah: true,
+  'roa-tara': true,
+  sah: true,
+  sa: true,
+  os: true,
+  pam: true,
+  hsb: true,
+  si: true,
+  se: true,
+  bar: true,
+  li: true,
+  mi: true,
+  co: true,
+  gan: true,
+  fo: true,
+  ilo: true,
+  pa: true,
+  bo: true,
+  glk: true,
+  rue: true,
+  bcl: true,
+  'fiu-vro': true,
+  mrj: true,
+  'nds-nl': true,
+  tk: true,
+  ps: true,
+  vls: true,
+  xmf: true,
+  gv: true,
+  diq: true,
+  or: true,
+  kv: true,
+  pag: true,
+  km: true,
+  zea: true,
+  dv: true,
+  nrm: true,
+  mhr: true,
+  rm: true,
+  koi: true,
+  udm: true,
+  csb: true,
+  frr: true,
+  vep: true,
+  lad: true,
+  lij: true,
+  wuu: true,
+  fur: true,
+  'zh-classical': true,
+  ug: true,
+  sc: true,
+  stq: true,
+  ay: true,
+  mt: true,
+  pi: true,
+  so: true,
+  bh: true,
+  ksh: true,
+  nov: true,
+  hak: true,
+  ang: true,
+  kw: true,
+  pcd: true,
+  nv: true,
+  gn: true,
+  ext: true,
+  frp: true,
+  as: true,
+  szl: true,
+  gag: true,
+  eml: true,
+  ie: true,
+  ln: true,
+  ace: true,
+  ce: true,
+  pfl: true,
+  krc: true,
+  xal: true,
+  haw: true,
+  pdc: true,
+  rw: true,
+  crh: true,
+  to: true,
+  dsb: true,
+  kl: true,
+  arc: true,
+  myv: true,
+  kab: true,
+  lez: true,
+  bjn: true,
+  sn: true,
+  pap: true,
+  tpi: true,
+  lbe: true,
+  wo: true,
+  jbo: true,
+  mdf: true,
+  'cbk-zam': true,
+  av: true,
+  kbd: true,
+  srn: true,
+  mwl: true
+};
+
+var hundredPlusLanguages = {
+  ty: true,
+  lo: true,
+  ab: true,
+  tet: true,
+  kg: true,
+  ltg: true,
+  na: true,
+  ig: true,
+  bxr: true,
+  nso: true,
+  za: true,
+  kaa: true,
+  zu: true,
+  chy: true,
+  rmy: true,
+  'roa-rup': true,
+  cu: true,
+  tn: true,
+  chr: true,
+  bi: true,
+  cdo: true,
+  got: true,
+  sm: true,
+  mo: true,
+  bm: true,
+  iu: true,
+  pih: true,
+  pnt: true,
+  sd: true,
+  ss: true,
+  ki: true,
+  ee: true,
+  ha: true,
+  om: true,
+  fj: true,
+  ti: true,
+  ts: true,
+  ks: true,
+  ve: true,
+  sg: true,
+  rn: true,
+  st: true,
+  dz: true,
+  ak: true,
+  cr: true,
+  tum: true,
+  lg: true,
+  ik: true,
+  ff: true,
+  ny: true,
+  tw: true,
+  ch: true,
+  xh: true
+};
+
+var tenPlusLanguages = {
+  ng: true,
+  ii: true,
+  cho: true,
+  mh: true
+};
+
+var onePlusLanguages = {
+  aa: true,
+  kj: true,
+  ho: true,
+  mus: true,
+  kr: true
+};
+
+var zeroLanguages = {
+  hz: true
 };
 
 var IRC_CHANNELS = [];
@@ -129,13 +395,56 @@ if (MONITOR_LONG_TAIL_WIKIPEDIAS) {
     IRC_CHANNELS.push('#' + language + PROJECT);
   });
 }
+if (MONITOR_REALLY_LONG_TAIL_WIKIPEDIAS) {
+  Object.keys(tenThousandPlusLanguages).forEach(function(language) {
+    IRC_CHANNELS.push('#' + language + PROJECT);
+  });
+  Object.keys(thousandPlusLanguages).forEach(function(language) {
+    IRC_CHANNELS.push('#' + language + PROJECT);
+  });
+  Object.keys(hundredPlusLanguages).forEach(function(language) {
+    IRC_CHANNELS.push('#' + language + PROJECT);
+  });
+  Object.keys(tenPlusLanguages).forEach(function(language) {
+    IRC_CHANNELS.push('#' + language + PROJECT);
+  });
+  Object.keys(onePlusLanguages).forEach(function(language) {
+    IRC_CHANNELS.push('#' + language + PROJECT);
+  });
+  Object.keys(zeroLanguages).forEach(function(language) {
+    IRC_CHANNELS.push('#' + language + PROJECT);
+  });
+}
 
 var client = new irc.Client(
     IRC_SERVER,
     IRC_NICK,
     {
-      channels: IRC_CHANNELS
+      userName: IRC_NICK,
+      realName: IRC_REAL_NAME_AND_CONTACT,
+      floodProtection: true,
+      showErrors: true,
+      stripColors: true
     });
+
+client.addListener('registered', function(message) {
+  console.log('Connected to IRC server ' + IRC_SERVER);
+  // connect to IRC channels
+  IRC_CHANNELS.forEach(function(channel) {
+    console.log('Joining channel ' + channel);
+    client.join(channel);
+  });
+});
+
+// fired whenever the client connects to an IRC channel
+client.addListener('join', function(channel, nick, message) {
+  console.log('Joined channel ' + channel);
+});
+
+// fired whenever the client encounters an error
+client.addListener('error', function(message) {
+  console.warn('IRC error: ' + message);
+});
 
 // global objects, required to keep track of the currently monitored articles
 // and article clusters for the different language versions
@@ -152,19 +461,13 @@ function monitorWikipedia() {
       // the IRC log format is as follows (with color codes removed):
       // rc-pmtpa: [[Juniata River]] http://en.wikipedia.org/w/index.php?diff=516269072&oldid=514659029 * Johanna-Hypatia * (+67) Category:Place names of Native American origin in Pennsylvania
       var messageComponents = message.split('*');
-      // remove color codes
-      var regex = /\x0314\[\[\x0307(.+?)\x0314\]\]\x034.+?$/;
-      var article = message.replace(regex, '$1');
+      var articleRegExp = /\[\[(.+?)\]\].+?\s$/;
+      var article = messageComponents[0].replace(articleRegExp, '$1');
       // discard non-article namespaces, as listed here:
       // http://www.mediawiki.org/wiki/Help:Namespaces
       // this means only listening to messages without a ':' essentially
       if (article.indexOf(':') === -1) {
-        var editor = messageComponents[1]
-            .replace(/\x0303/g, '')
-            .replace(/\x035/g, '')
-            .replace(/\u0003/g, '')
-            .replace(/^\s*/, '')
-            .replace(/\s*$/, '');
+        var editor = messageComponents[1].trim();
         // discard edits made by bots.
         // bots are identified by a B flag, as documented here
         // http://www.mediawiki.org/wiki/Help:Tracking_changes
@@ -173,8 +476,9 @@ function monitorWikipedia() {
         // bots must identify themselves by prefixing or suffixing their
         // username with "bot".
         // http://en.wikipedia.org/wiki/Wikipedia:Bot_policy#Bot_accounts
-        var flags = messageComponents[0]
-            .replace(/.*?\x034\s(.*?)\x0310.+$/, '$1');
+        var flagsAndDiffUrl =
+            messageComponents[0].replace('[[' + article + ']] ', '').split(' ');
+        var flags = flagsAndDiffUrl[0];
         if (DISCARD_WIKIPEDIA_BOTS) {
           if ((/B/.test(flags)) ||
               (/^bot/i.test(editor)) ||
@@ -205,8 +509,7 @@ function monitorWikipedia() {
         });
 
         // get diff URL
-        var diffUrl = messageComponents[0]
-            .replace(/.*?\u000302(.*?)\u0003.+$/, '$1');
+        var diffUrl = flagsAndDiffUrl[1];
         if ((diffUrl.indexOf('diff') !== -1) &&
             (diffUrl.indexOf('oldid') !== -1)) {
           var toRev = diffUrl.replace(/.*\?diff=(\d+).*/, '$1');
@@ -217,8 +520,7 @@ function monitorWikipedia() {
         } else {
           diffUrl = '';
         }
-        var delta = messageComponents[2]
-            .replace(/\s\(\u0002?([+-]\d+)\u0002?\)\s\x0310.*?$/, '$1');
+        var delta = messageComponents[2].replace(/\s\(([+-]\d+)\)\s.*?$/, '$1');
 
         // new article
         if (!articleVersionsMap[article]) {
@@ -457,10 +759,8 @@ function getLanguageReferences(error, response, body, article) {
       }
     }
   } else {
-    var red = '\u001b[31m';
-    var reset = '\u001b[0m';
-    console.log(red + new Date() + ' ERROR (Wikipedia API)' + reset +
-        (response? ' Status Code: ' + response.statusCode : '') + '.');
+    console.warn('Wikipedia API error.' +
+        (response? ' Status Code: ' + response.statusCode : ''));
   }
 }
 
@@ -502,7 +802,6 @@ io.sockets.on('connection', function(socket) {
     console.log('Setting NUMBER_OF_CONCURRENT_EDITORS to: ' +
         NUMBER_OF_CONCURRENT_EDITORS);
   });
-
 });
 
 // clean-up function, called regularly like a garbage collector
@@ -566,7 +865,7 @@ function tweet(article, occurrences, editors, languages, microposts) {
     return o;
   };
   socialUpdates = shuffle(socialUpdates);
-  var text = 'Breaking News Candidate: ' + wikipediaUrl +
+  var text = '#BreakingNews Candidate: ' + wikipediaUrl +
       ' [Edits: ' + occurrences +
       ', Editors: ' + editors +
       ', Langs: ' + languages +
@@ -587,7 +886,7 @@ function tweet(article, occurrences, editors, languages, microposts) {
   console.log('Tweeting: ' + text);
   twit.updateStatus(text, function (err, data) {
     if (err) {
-      console.log('Tweet error: ' + err);
+      console.warn('Tweet error: ' + err);
     }
   });
 }

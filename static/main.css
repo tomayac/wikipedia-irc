@@ -101,6 +101,12 @@ DIV.settings {
   padding: 0.5em;
 }
 
+#followWidget {
+  position: absolute;
+  top: 20px;
+  right: 80px;
+}
+
 SPAN.value {
   color: maroon;
   font-weight: bold;

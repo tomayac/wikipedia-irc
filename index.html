@@ -8,6 +8,9 @@
     <link rel="stylesheet" href="main.css" />
   </head>
   <body>
+    <iframe id="followWidget" allowtransparency="true" frameborder="0" scrolling="no"
+      src="//platform.twitter.com/widgets/follow_button.html?screen_name=WikiLiveMon&show_count=false&lang=en&show_screen_name=true&dnt=true"
+      style="width:300px; height:20px;"></iframe>
     <a class="about" target="_blank" href="http://www.lsi.upc.edu/~tsteiner/papers/2013/mj-no-more-using-concurrent-wikipedia-edit-spikes-with-social-network-plausibility-checks-for-breaking-news-detection-ramss2013.pdf">Read the paper</a>
     <a id="settings-link" class="settings"><b>⚙</b> Settings</a>
     <h1>Wikipedia Live Monitor</h1>
@@ -398,7 +401,7 @@
         for (var i = 0, len = changesLinks.length; i < len; i++) {
           changesLinks[i].addEventListener('click', function(e) {
             e.preventDefault();
-            getChanges(e.target.href);
+            getChanges(e.target.parentNode.href);
           }, false);
         }
       }

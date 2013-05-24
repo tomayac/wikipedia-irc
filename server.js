@@ -546,7 +546,7 @@ function monitorWikipedia() {
           };
           io.sockets.emit('firstTimeSeen', {
             article: article,
-            timestamp: new Date(articles[article].timestamp),
+            timestamp: new Date(articles[article].timestamp).toString(),
             editors: [editor],
             languages: articles[article].languages,
             versions: articles[article].versions
@@ -565,7 +565,7 @@ function monitorWikipedia() {
             io.sockets.emit('merging', {
               current: article,
               existing: articleVersionsMap[article],
-              timestamp: new Date(now)
+              timestamp: new Date(now).toString()
             });
             if (VERBOUS) {
               console.log('[ ⚭ ] Merging ' + article + ' with ' +
@@ -656,7 +656,7 @@ function monitorWikipedia() {
             io.sockets.emit('nTimesSeen', {
               article: article,
               occurrences: articles[article].occurrences,
-              timestamp: new Date(articles[article].timestamp),
+              timestamp: new Date(articles[article].timestamp).toString(),
               editIntervals: articles[article].intervals,
               editors: articles[article].editors,
               languages: articles[article].languages,
@@ -686,7 +686,7 @@ function monitorWikipedia() {
               io.sockets.emit('breakingNewsCandidate', {
                 article: article,
                 occurrences: articles[article].occurrences,
-                timestamp: new Date(articles[article].timestamp),
+                timestamp: new Date(articles[article].timestamp).toString(),
                 editIntervals: articles[article].intervals,
                 editors: articles[article].editors,
                 languages: articles[article].languages,

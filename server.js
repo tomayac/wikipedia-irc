@@ -460,14 +460,14 @@ function monitorWikipedia() {
       // get the editor's username or IP address
       // the IRC log format is as follows (with color codes removed):
       // rc-pmtpa: [[Juniata River]] http://en.wikipedia.org/w/index.php?diff=516269072&oldid=514659029 * Johanna-Hypatia * (+67) Category:Place names of Native American origin in Pennsylvania
-      var messageComponents = message.split('*');
-      var articleRegExp = /\[\[(.+?)\]\].+?\s$/;
+      var messageComponents = message.split(' * ');
+      var articleRegExp = /\[\[(.+?)\]\].+?$/;
       var article = messageComponents[0].replace(articleRegExp, '$1');
       // discard non-article namespaces, as listed here:
       // http://www.mediawiki.org/wiki/Help:Namespaces
       // this means only listening to messages without a ':' essentially
       if (article.indexOf(':') === -1) {
-        var editor = messageComponents[1].trim();
+        var editor = messageComponents[1];
         // discard edits made by bots.
         // bots are identified by a B flag, as documented here
         // http://www.mediawiki.org/wiki/Help:Tracking_changes
@@ -520,7 +520,9 @@ function monitorWikipedia() {
         } else {
           diffUrl = '';
         }
-        var delta = messageComponents[2].replace(/\s\(([+-]\d+)\)\s.*?$/, '$1');
+        deltaAndCommentRegExp = /\(([+-]\d+)\)\s(.*?)$/;
+        var delta = messageComponents[2].replace(deltaAndCommentRegExp, '$1');
+        var comment = messageComponents[2].replace(deltaAndCommentRegExp, '$2');
 
         // new article
         if (!articleVersionsMap[article]) {
@@ -539,7 +541,8 @@ function monitorWikipedia() {
             diffUrl: diffUrl,
             delta: delta,
             language: language,
-            editor: editor
+            editor: editor,
+            comment: comment ? comment : ''
           };
           io.sockets.emit('firstTimeSeen', {
             article: article,
@@ -579,7 +582,8 @@ function monitorWikipedia() {
             diffUrl: diffUrl,
             delta: delta,
             language: language,
-            editor: editor
+            editor: editor,
+            comment: comment ? comment : ''
           };
           // we track editors by languages like so: lang:user. if the same user
           // edits an article in different languages, she is logged as

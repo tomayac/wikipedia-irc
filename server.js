@@ -500,8 +500,8 @@ function monitorWikipedia() {
         var flags = flagsAndDiffUrl[0];
         if (DISCARD_WIKIPEDIA_BOTS) {
           if ((/B/.test(flags)) ||
-              (/^bot/i.test(editor)) ||
-              (/bot$/i.test(editor))) {
+              (/\bbot/i.test(editor)) ||
+              (/bot\b/i.test(editor))) {
             return;
           }
         }

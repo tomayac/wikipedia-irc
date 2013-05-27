@@ -438,9 +438,28 @@ client.addListener('registered', function(message) {
 
 // fired whenever the client connects to an IRC channel
 client.addListener('join', function(channel, nick, message) {
-  console.log('Joined channel ' + channel);
+  console.log(nick + ' joined channel ' + channel);
 });
-
+// fired whenever someone parts a channel
+client.addListener('part', function(channel, nick, reason, message) {
+  console.log('User ' + nick + ' has left ' + channel + ' (' + reason + ')');
+});
+// fired whenever someone quits the IRC server
+client.addListener('quit', function(nick, reason, channels, message) {
+  console.log('User ' + nick + ' has quit ' + channels + ' (' + reason + ')');
+});
+// fired whenever someone sends a notice
+client.addListener('notice', function(nick, to, text, message) {
+  console.log('Notice from ' + (nick === undefined? 'server' : nick) + ' to ' + to +  ': ' + text);
+});
+// fired whenever someone gets kicked from a channel
+client.addListener('kick', function(channel, nick, by, reason, message) {
+  console.warn('User ' + (by === undefined? 'server' : by) + ' has kicked ' + nick + ' from ' + channel +  ' (' + reason + ')');
+});
+// fired whenever someone is killed from the IRC server
+client.addListener('kill', function(nick, reason, channels, message) {
+  console.warn('User ' + nick + ' was killed from ' + channels +  ' (' + reason + ')');
+});
 // fired whenever the client encounters an error
 client.addListener('error', function(message) {
   console.warn('IRC error: ' + message);

@@ -545,6 +545,10 @@ function monitorWikipedia() {
 
         // new article
         if (!articleVersionsMap[article]) {
+          // self-reference to detect repeatedly edited single-language version
+          // articles that do not have other language versions
+          articleVersionsMap[article] = article;
+          // store the first occurrence of the new article
           now = Date.now();
           articles[article] = {
             timestamp: now,
@@ -726,8 +730,11 @@ function monitorWikipedia() {
                 socialNetworksResults: socialNetworksResults
               });
               if (TWEET_BREAKING_NEWS_CANDIDATES) {
+                // the actual breaking news article language version may vary,
+                // however, to avoid over-tweeting, tweet only once, i.e.,
+                // look up the main article in the articleVersionsMap
                 tweet(
-                    article,
+                    articleVersionsMap[article],
                     articles[article].occurrences,
                     articles[article].editors.length,
                     Object.keys(articles[article].languages).length,

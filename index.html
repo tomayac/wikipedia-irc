@@ -146,7 +146,7 @@
         return '<nobr><img src="' + components[0] +
             '.png" width="16" height="11"> ' +
             '<a class="title" href="http://' + components[0] +
-            '.wikipedia.org/wiki/' + components[1] + '">' +
+            '.wikipedia.org/wiki/' + encodeURIComponent(components[1]) + '">' +
             components[1].replace(/_/g, ' ') + '</a></nobr>';
       }
 

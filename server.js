@@ -664,8 +664,15 @@ function monitorWikipedia() {
 
           // search for all article titles in social networks
           var searchTerms = {};
+          // use the article title as search term
           searchTerms[article.split(':')[1].replace(/_/g, ' ')] = true;
+          // use the article URL as search term
+          searchTerms[createWikipediaUrl(article)] = true;
           for (var key in articles[article].versions) {
+            // use the article URL as search term
+            var wikipediaUrl = createWikipediaUrl(key);
+            searchTerms[wikipediaUrl] = true;
+            // use the article title as search term
             var articleTitle = key.split(':')[1].replace(/_/g, ' ');
             if (!searchTerms[articleTitle]) {
               searchTerms[articleTitle] = true;
@@ -851,10 +858,14 @@ function cleanUpMonitoringLoop() {
   });
 }
 
-function tweet(article, occurrences, editors, languages, microposts) {
+function createWikipediaUrl(article) {
   var components = article.split(':');
-  var wikipediaUrl = 'http://' + components[0] +
-      '.wikipedia.org/wiki/' + encodeURIComponent(components[1]);
+  return 'http://' + components[0] + '.wikipedia.org/wiki/' +
+      encodeURIComponent(components[1]);
+}
+
+function tweet(article, occurrences, editors, languages, microposts) {
+  var wikipediaUrl = createWikipediaUrl(article);
   // if we have already tweeted the current URL, don't tweet it again
   if (recentTweetsBuffer.indexOf(wikipediaUrl) !== -1) {
     console.log('Already tweeted about ' + wikipediaUrl);

@@ -39,7 +39,7 @@ var BREAKING_NEWS_THRESHOLD = 5;
 
 // an article cluster must be edited by at least NUMBER_OF_CONCURRENT_EDITORS
 // concurrent editors before it is considered a breaking news candidate
-var NUMBER_OF_CONCURRENT_EDITORS = 3;
+var NUMBER_OF_CONCURRENT_EDITORS = 2;
 
 // Wikipedia edit bots can account for many false positives, so usually we want
 // to discard them
@@ -678,7 +678,17 @@ function monitorWikipedia() {
           var numberOfEditors = articles[article].editors.length;
           var numberOfEditorsReached =
               numberOfEditors >= NUMBER_OF_CONCURRENT_EDITORS;
-
+          // if we have an article in more than one languge, check for the
+          // normal NUMBER_OF_CONCURRENT_EDITORS
+          if (Object.keys(articles[article].languages).length > 1) {
+            numberOfEditorsReached =
+                numberOfEditors >= NUMBER_OF_CONCURRENT_EDITORS;
+          // else if we have an article in just one languge, require the
+          // double NUMBER_OF_CONCURRENT_EDITORS
+          } else {
+            numberOfEditorsReached =
+                numberOfEditors >= 2 * NUMBER_OF_CONCURRENT_EDITORS;
+          }
           // search for all article titles in social networks
           var searchTerms = {};
           // use the article title as search term

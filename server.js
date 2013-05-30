@@ -745,7 +745,7 @@ function monitorWikipedia() {
                   addedLines.each(function(i, elem) {
                     var text = $(this).text().trim();
                     var concepts = extractWikiConcepts(text,
-                        article.changes[now].language);
+                        articles[article].changes[now].language);
                     if (concepts) {
                       diffConcepts.concat(concepts);
                     }

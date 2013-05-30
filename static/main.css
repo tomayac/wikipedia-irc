@@ -101,6 +101,14 @@ DIV.settings {
   padding: 0.5em;
 }
 
+#firstTimeSeen {
+  overflow: hidden;
+}
+
+#merging {
+  overflow: hidden;
+}
+
 #followCallToAction {
   font-size: 0.7em;
   background-color: yellow;

@@ -740,65 +740,76 @@ function monitorWikipedia() {
                 if (json && json.compare && json.compare['*']) {
                   var parsedHtml = $.load(json.compare['*']);
                   var addedLines = parsedHtml('.diff-addedline');
+                  var diffTexts = [];
+                  var diffConcepts = [];
                   addedLines.each(function(i, elem) {
                     var text = $(this).text().trim();
                     var concepts = extractWikiConcepts(text,
                         article.changes[now].language);
+                    if (concepts) {
+                      diffConcepts.concat(concepts);
+                    }
                     text = removeWikiNoise(text);
                     text = removeWikiMarkup(text);
-                    articles[article].changes[now].diffText = text;
-                    articles[article].changes[now].namedEntities = concepts;
-                    // check if all three breaking news conditions are fulfilled
-                    // at once
-                    if ((breakingNewsThresholdReached) &&
-                        (allEditsInShortDistances) &&
-                        (numberOfEditorsReached)) {
-                      io.sockets.emit('breakingNewsCandidate', {
-                        article: article,
-                        occurrences: articles[article].occurrences,
-                        timestamp: new Date(articles[article].timestamp) + '',
-                        editIntervals: articles[article].intervals,
-                        editors: articles[article].editors,
-                        languages: articles[article].languages,
-                        versions: articles[article].versions,
-                        changes: articles[article].changes,
-                        conditions: {
-                          breakingNewsThreshold: breakingNewsThresholdReached,
-                          secondsBetweenEdits: allEditsInShortDistances,
-                          numberOfConcurrentEditors: numberOfEditorsReached
-                        },
-                        socialNetworksResults: socialNetworksResults
-                      });
-                      if (TWEET_BREAKING_NEWS_CANDIDATES) {
-                        // the actual breaking news article language version may
-                        // vary, however, to avoid over-tweeting, tweet only
-                        // once, i.e., look up the main article in the
-                        // articleVersionsMap
-                        tweet(
-                            articleVersionsMap[article],
-                            articles[article].occurrences,
-                            articles[article].editors.length,
-                            Object.keys(articles[article].languages).length,
-                            socialNetworksResults);
-                      }
-                      if (VERBOUS) {
-                        console.log('[ ★ ] Breaking news candidate: "' +
-                            article + '". ' +
-                            articles[article].occurrences + ' ' +
-                            'times seen. ' +
-                            'Timestamp: ' +
-                            new Date(articles[article].timestamp) +
-                            '. Edit intervals: ' +
-                            articles[article].intervals.toString()
-                            .replace(/(\d+),?/g, '$1ms ').trim() + '. ' +
-                            'Number of editors: ' +
-                            articles[article].editors.length + '. ' +
-                            'Editors: ' + articles[article].editors + '. ' +
-                            'Languages: ' +
-                            JSON.stringify(articles[article].languages));
-                      }
+                    if (text) {
+                      diffTexts.push(text);
                     }
                   });
+                  if (!diffTexts) {
+                    return;
+                  }
+                  articles[article].changes[now].diffTexts = diffTexts;
+                  articles[article].changes[now].namedEntities = diffConcepts;
+                  // check if all three breaking news conditions are fulfilled
+                  // at once
+                  if ((breakingNewsThresholdReached) &&
+                      (allEditsInShortDistances) &&
+                      (numberOfEditorsReached)) {
+                    io.sockets.emit('breakingNewsCandidate', {
+                      article: article,
+                      occurrences: articles[article].occurrences,
+                      timestamp: new Date(articles[article].timestamp) + '',
+                      editIntervals: articles[article].intervals,
+                      editors: articles[article].editors,
+                      languages: articles[article].languages,
+                      versions: articles[article].versions,
+                      changes: articles[article].changes,
+                      conditions: {
+                        breakingNewsThreshold: breakingNewsThresholdReached,
+                        secondsBetweenEdits: allEditsInShortDistances,
+                        numberOfConcurrentEditors: numberOfEditorsReached
+                      },
+                      socialNetworksResults: socialNetworksResults
+                    });
+                    if (TWEET_BREAKING_NEWS_CANDIDATES) {
+                      // the actual breaking news article language version may
+                      // vary, however, to avoid over-tweeting, tweet only
+                      // once, i.e., look up the main article in the
+                      // articleVersionsMap
+                      tweet(
+                          articleVersionsMap[article],
+                          articles[article].occurrences,
+                          articles[article].editors.length,
+                          Object.keys(articles[article].languages).length,
+                          socialNetworksResults);
+                    }
+                    if (VERBOUS) {
+                      console.log('[ ★ ] Breaking news candidate: "' +
+                          article + '". ' +
+                          articles[article].occurrences + ' ' +
+                          'times seen. ' +
+                          'Timestamp: ' +
+                          new Date(articles[article].timestamp) +
+                          '. Edit intervals: ' +
+                          articles[article].intervals.toString()
+                          .replace(/(\d+),?/g, '$1ms ').trim() + '. ' +
+                          'Number of editors: ' +
+                          articles[article].editors.length + '. ' +
+                          'Editors: ' + articles[article].editors + '. ' +
+                          'Languages: ' +
+                          JSON.stringify(articles[article].languages));
+                    }
+                  }
                 }
               } else {
                 console.warn('Wikipedia API error while getting diff text.' +

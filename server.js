@@ -5,8 +5,10 @@ var http = require('http');
 var app = express();
 var server = http.createServer(app);
 var io = require('socket.io').listen(server);
-var socialNetworkSearch = require('./social-network-search.js');
+var $ = require('cheerio');
 var twitter = require('ntwitter');
+var socialNetworkSearch = require('./social-network-search.js');
+var wiki2html = require('./wiki2html.js');
 
 // verbous debug mode
 var VERBOUS = false;
@@ -385,6 +387,14 @@ var zeroLanguages = {
   hz: true
 };
 
+var reallyLongTailWikipedias = [].concat(
+    tenThousandPlusLanguages,
+    thousandPlusLanguages,
+    hundredPlusLanguages,
+    tenPlusLanguages,
+    onePlusLanguages,
+    zeroLanguages);
+
 var IRC_CHANNELS = [];
 var PROJECT = '.wikipedia';
 Object.keys(millionPlusLanguages).forEach(function(language) {
@@ -450,15 +460,18 @@ client.addListener('quit', function(nick, reason, channels, message) {
 });
 // fired whenever someone sends a notice
 client.addListener('notice', function(nick, to, text, message) {
-  console.log('Notice from ' + (nick === undefined? 'server' : nick) + ' to ' + to +  ': ' + text);
+  console.log('Notice from ' + (nick === undefined? 'server' : nick) + ' to ' +
+      to +  ': ' + text);
 });
 // fired whenever someone gets kicked from a channel
 client.addListener('kick', function(channel, nick, by, reason, message) {
-  console.warn('User ' + (by === undefined? 'server' : by) + ' has kicked ' + nick + ' from ' + channel +  ' (' + reason + ')');
+  console.warn('User ' + (by === undefined? 'server' : by) + ' has kicked ' +
+      nick + ' from ' + channel +  ' (' + reason + ')');
 });
 // fired whenever someone is killed from the IRC server
 client.addListener('kill', function(nick, reason, channels, message) {
-  console.warn('User ' + nick + ' was killed from ' + channels +  ' (' + reason + ')');
+  console.warn('User ' + nick + ' was killed from ' + channels +  ' (' +
+      reason + ')');
 });
 // fired whenever the client encounters an error
 client.addListener('error', function(message) {
@@ -709,58 +722,188 @@ function monitorWikipedia() {
                   '. Editors: ' + articles[article].editors + '. ' +
                   'Languages: ' + JSON.stringify(articles[article].languages));
             }
-            // check if all three breaking news conditions are fulfilled at once
-            if ((breakingNewsThresholdReached) &&
-                (allEditsInShortDistances) &&
-                (numberOfEditorsReached)) {
-              io.sockets.emit('breakingNewsCandidate', {
-                article: article,
-                occurrences: articles[article].occurrences,
-                timestamp: new Date(articles[article].timestamp).toString(),
-                editIntervals: articles[article].intervals,
-                editors: articles[article].editors,
-                languages: articles[article].languages,
-                versions: articles[article].versions,
-                changes: articles[article].changes,
-                conditions: {
-                  breakingNewsThreshold: breakingNewsThresholdReached,
-                  secondsBetweenEdits: allEditsInShortDistances,
-                  numberOfConcurrentEditors: numberOfEditorsReached
-                },
-                socialNetworksResults: socialNetworksResults
-              });
-              if (TWEET_BREAKING_NEWS_CANDIDATES) {
-                // the actual breaking news article language version may vary,
-                // however, to avoid over-tweeting, tweet only once, i.e.,
-                // look up the main article in the articleVersionsMap
-                tweet(
-                    articleVersionsMap[article],
-                    articles[article].occurrences,
-                    articles[article].editors.length,
-                    Object.keys(articles[article].languages).length,
-                    socialNetworksResults);
+            // get the diff URL and check if we have notable or trivial changes
+            var options = {
+              url: diffUrl,
+              headers: {
+                'User-Agent': USER_AGENT
               }
-              if (VERBOUS) {
-                console.log('[ ★ ] Breaking news candidate: "' +
-                    article + '". ' +
-                    articles[article].occurrences + ' ' +
-                    'times seen. ' +
-                    'Timestamp: ' + new Date(articles[article].timestamp) +
-                    '. Edit intervals: ' +
-                    articles[article].intervals.toString()
-                    .replace(/(\d+),?/g, '$1ms ').trim() + '. ' +
-                    'Number of editors: ' +
-                    articles[article].editors.length + '. ' +
-                    'Editors: ' + articles[article].editors + '. ' +
-                    'Languages: ' +
-                    JSON.stringify(articles[article].languages));
+            };
+            request.get(options, function(error, response, body) {
+              if (!error) {
+                var json;
+                try {
+                  json = JSON.parse(body);
+                } catch(e) {
+                  json = false;
+                }
+                if (json && json.compare && json.compare['*']) {
+                  var parsedHtml = $.load(json.compare['*']);
+                  var addedLines = parsedHtml('.diff-addedline');
+                  addedLines.each(function(i, elem) {
+                    var text = $(this).text().trim();
+                    var concepts = extractWikiConcepts(text,
+                        article.changes[now].language);
+                    text = removeWikiNoise(text);
+                    text = removeWikiMarkup(text);
+                    articles[article].changes[now].diffText = text;
+                    articles[article].changes[now].namedEntities = concepts;
+                    // check if all three breaking news conditions are fulfilled
+                    // at once
+                    if ((breakingNewsThresholdReached) &&
+                        (allEditsInShortDistances) &&
+                        (numberOfEditorsReached)) {
+                      io.sockets.emit('breakingNewsCandidate', {
+                        article: article,
+                        occurrences: articles[article].occurrences,
+                        timestamp: new Date(articles[article].timestamp) + '',
+                        editIntervals: articles[article].intervals,
+                        editors: articles[article].editors,
+                        languages: articles[article].languages,
+                        versions: articles[article].versions,
+                        changes: articles[article].changes,
+                        conditions: {
+                          breakingNewsThreshold: breakingNewsThresholdReached,
+                          secondsBetweenEdits: allEditsInShortDistances,
+                          numberOfConcurrentEditors: numberOfEditorsReached
+                        },
+                        socialNetworksResults: socialNetworksResults
+                      });
+                      if (TWEET_BREAKING_NEWS_CANDIDATES) {
+                        // the actual breaking news article language version may
+                        // vary, however, to avoid over-tweeting, tweet only
+                        // once, i.e., look up the main article in the
+                        // articleVersionsMap
+                        tweet(
+                            articleVersionsMap[article],
+                            articles[article].occurrences,
+                            articles[article].editors.length,
+                            Object.keys(articles[article].languages).length,
+                            socialNetworksResults);
+                      }
+                      if (VERBOUS) {
+                        console.log('[ ★ ] Breaking news candidate: "' +
+                            article + '". ' +
+                            articles[article].occurrences + ' ' +
+                            'times seen. ' +
+                            'Timestamp: ' +
+                            new Date(articles[article].timestamp) +
+                            '. Edit intervals: ' +
+                            articles[article].intervals.toString()
+                            .replace(/(\d+),?/g, '$1ms ').trim() + '. ' +
+                            'Number of editors: ' +
+                            articles[article].editors.length + '. ' +
+                            'Editors: ' + articles[article].editors + '. ' +
+                            'Languages: ' +
+                            JSON.stringify(articles[article].languages));
+                      }
+                    }
+                  });
+                }
+              } else {
+                console.warn('Wikipedia API error while getting diff text.' +
+                    (response? ' Status Code: ' + response.statusCode : ''));
               }
-            }
+            });
           });
         }
       }
     }
   });
+}
+
+function strip_tags (input, allowed) {
+  // http://kevin.vanzonneveld.net
+  // +   original by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
+  // +   improved by: Luke Godfrey
+  // +      input by: Pul
+  // +   bugfixed by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
+  // +   bugfixed by: Onno Marsman
+  // +      input by: Alex
+  // +   bugfixed by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
+  // +      input by: Marc Palau
+  // +   improved by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
+  // +      input by: Brett Zamir (http://brett-zamir.me)
+  // +   bugfixed by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
+  // +   bugfixed by: Eric Nagel
+  // +      input by: Bobby Drake
+  // +   bugfixed by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
+  // +   bugfixed by: Tomasz Wesolowski
+  // +      input by: Evertjan Garretsen
+  // +    revised by: Rafał Kukawski (http://blog.kukawski.pl/)
+  // *     example 1: strip_tags('<p>Kevin</p> <br /><b>van</b> <i>Zonneveld</i>', '<i><b>');
+  // *     returns 1: 'Kevin <b>van</b> <i>Zonneveld</i>'
+  // *     example 2: strip_tags('<p>Kevin <img src="someimage.png" onmouseover="someFunction()">van <i>Zonneveld</i></p>', '<p>');
+  // *     returns 2: '<p>Kevin van Zonneveld</p>'
+  // *     example 3: strip_tags("<a href='http://kevin.vanzonneveld.net'>Kevin van Zonneveld</a>", "<a>");
+  // *     returns 3: '<a href='http://kevin.vanzonneveld.net'>Kevin van Zonneveld</a>'
+  // *     example 4: strip_tags('1 < 5 5 > 1');
+  // *     returns 4: '1 < 5 5 > 1'
+  // *     example 5: strip_tags('1 <br/> 1');
+  // *     returns 5: '1  1'
+  // *     example 6: strip_tags('1 <br/> 1', '<br>');
+  // *     returns 6: '1  1'
+  // *     example 7: strip_tags('1 <br/> 1', '<br><br/>');
+  // *     returns 7: '1 <br/> 1'
+  allowed = (((allowed || "") + "").toLowerCase().match(/<[a-z][a-z0-9]*>/g) || []).join(''); // making sure the allowed arg is a string containing only tags in lowercase (<a><b><c>)
+  var tags = /<\/?([a-z][a-z0-9]*)\b[^>]*>/gi,
+    commentsAndPhpTags = /<!--[\s\S]*?-->|<\?(?:php)?[\s\S]*?\?>/gi;
+  return input.replace(commentsAndPhpTags, '').replace(tags, function ($0, $1) {
+    return allowed.indexOf('<' + $1.toLowerCase() + '>') > -1 ? $0 : '';
+  });
+}
+
+function extractWikiConcepts(text, language) {
+  var concepts = [];
+  text = text.replace(/\[\[(.*?)\]\]/g, function(m, l) {
+    var p = l.split(/\|/);
+    var link = p.shift();
+
+    if (link.match(/^Image:(.*)/)) {
+      return false;
+    }
+    if (link.indexOf(':') === -1) {
+      concepts.push(language + ':' + link.replace(/\s/g, '_'));
+    } else {
+      concepts.push(link.replace(/\s/g, '_'));
+    }
+  });
+  return concepts;
+}
+
+function removeWikiNoise(text) {
+  // remove things like [[Kategorie:Moravske Toplice| Moravske Toplice]]
+  var namespaceNoiseRegEx = /\[\[.*?\:.*?\]\]/g;
+  // remove things like {{NewZealand-writer-stub}}
+  var commentNoiseRegEx = /\{\{.*?\}\}/g;
+  // remove things like align="center"
+  var htmlAttributeRegEx = /\w+\s*\=\s*\"\w+\"/g;
+  // remove things like {{
+  var openingCommentParenthesisRegEx = /\{\{/g;
+  // remove things like }}
+  var closingCommentParenthesisRegEx = /\}\}/g;
+  text = text.replace(namespaceNoiseRegEx, '')
+      .replace(commentNoiseRegEx, ' ')
+      .replace(htmlAttributeRegEx, ' ')
+      .replace(openingCommentParenthesisRegEx, ' ')
+      .replace(closingCommentParenthesisRegEx, ' ')
+      .replace(/\n/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  text = strip_tags(text);
+  return text;
+}
+
+function removeWikiMarkup(text) {
+  var tableMarkupRegEx = /\|/g;
+  text = strip_tags(wiki2html(text));
+  text = text.replace(tableMarkupRegEx, ' ')
+      .replace(/\[\[/g, ' ')
+      .replace(/\]\]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .replace(/\s?=\s?/g, ' = ')
+      .trim();
+  return text;
 }
 
 // callback function for getting language references from the Wikipedia API
@@ -785,7 +928,9 @@ function getLanguageReferences(error, response, body, article) {
             var lang = langLink.lang;
             if ((millionPlusLanguages[lang]) ||
                 ((MONITOR_LONG_TAIL_WIKIPEDIAS) &&
-                    (oneHundredThousandPlusLanguages[lang]))) {
+                    (oneHundredThousandPlusLanguages[lang])) ||
+                ((MONITOR_REALLY_LONG_TAIL_WIKIPEDIAS) &&
+                    (reallyLongTailWikipedias[lang]))) {
               var title = langLink['*'].replace(/\s/g, '_');
               var articleVersion = lang + ':' + title;
               articleClusters[article][articleVersion] = true;
@@ -796,7 +941,7 @@ function getLanguageReferences(error, response, body, article) {
       }
     }
   } else {
-    console.warn('Wikipedia API error.' +
+    console.warn('Wikipedia API error while getting language references.' +
         (response? ' Status Code: ' + response.statusCode : ''));
   }
 }

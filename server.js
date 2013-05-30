@@ -729,6 +729,9 @@ function monitorWikipedia() {
                 'User-Agent': USER_AGENT
               }
             };
+            if (!diffUrl) {
+              return;
+            }
             request.get(options, function(error, response, body) {
               if (!error) {
                 var json;

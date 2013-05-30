@@ -39,7 +39,7 @@ var BREAKING_NEWS_THRESHOLD = 5;
 
 // an article cluster must be edited by at least NUMBER_OF_CONCURRENT_EDITORS
 // concurrent editors before it is considered a breaking news candidate
-var NUMBER_OF_CONCURRENT_EDITORS = 2;
+var NUMBER_OF_CONCURRENT_EDITORS = 3;
 
 // Wikipedia edit bots can account for many false positives, so usually we want
 // to discard them

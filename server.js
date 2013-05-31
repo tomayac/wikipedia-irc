@@ -17,10 +17,10 @@ var REALLY_VERBOUS = false;
 
 // whether to only monitor the 1,000,000+ articles Wikipedias,
 // or also the 100,000+ articles Wikipedias.
-var MONITOR_LONG_TAIL_WIKIPEDIAS = true;
+var MONITOR_LONG_TAIL_WIKIPEDIAS = false;
 
 // whether to also monitor the << 100,000+ articles Wikipedias
-var MONITOR_REALLY_LONG_TAIL_WIKIPEDIAS = true;
+var MONITOR_REALLY_LONG_TAIL_WIKIPEDIAS = false;
 
 // required for Wikipedia API
 var USER_AGENT = 'Wikipedia Live Monitor * IRC nick: wikipedia-live-monitor * Contact: tomac(a)google.com.';
@@ -555,7 +555,6 @@ function monitorWikipedia() {
         deltaAndCommentRegExp = /\(([+-]\d+)\)\s(.*?)$/;
         var delta = messageComponents[2].replace(deltaAndCommentRegExp, '$1');
         var comment = messageComponents[2].replace(deltaAndCommentRegExp, '$2');
-
         // new article
         if (!articleVersionsMap[article]) {
           // self-reference to detect repeatedly edited single-language version

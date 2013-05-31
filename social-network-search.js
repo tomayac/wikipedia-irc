@@ -181,6 +181,9 @@ var socialNetworkSearch = function(terms, callback) {
     if (results.length) {
       var curatedResults = [];
       results.forEach(function(result) {
+        if (!result.from) {
+          return;
+        }
         var user = result.from.name;
         var micropost = ''
         if (result.message) {

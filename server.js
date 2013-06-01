@@ -7,20 +7,21 @@ var server = http.createServer(app);
 var io = require('socket.io').listen(server);
 var $ = require('cheerio');
 var twitter = require('ntwitter');
+var nodemailer = require("nodemailer");
 var socialNetworkSearch = require('./social-network-search.js');
 var wiki2html = require('./wiki2html.js');
 
 // verbous debug mode
-var VERBOUS = false;
+var VERBOUS = true;
 // really very verbous debug mode
 var REALLY_VERBOUS = false;
 
 // whether to only monitor the 1,000,000+ articles Wikipedias,
 // or also the 100,000+ articles Wikipedias.
-var MONITOR_LONG_TAIL_WIKIPEDIAS = false;
+var MONITOR_LONG_TAIL_WIKIPEDIAS = true;
 
 // whether to also monitor the << 100,000+ articles Wikipedias
-var MONITOR_REALLY_LONG_TAIL_WIKIPEDIAS = false;
+var MONITOR_REALLY_LONG_TAIL_WIKIPEDIAS = true;
 
 // required for Wikipedia API
 var USER_AGENT = 'Wikipedia Live Monitor * IRC nick: wikipedia-live-monitor * Contact: tomac(a)google.com.';
@@ -55,6 +56,22 @@ var TWITTER_SHORT_URL_LENGTH = 23;
 
 // if enabled, breaking news candidates will be tweeted
 var TWEET_BREAKING_NEWS_CANDIDATES = false;
+
+// if enabled, breaking news candidates will be emailed
+var EMAIL_BREAKING_NEWS_CANDIDATES = false;
+
+if (EMAIL_BREAKING_NEWS_CANDIDATES) {
+  // create reusable transport method (opens pool of SMTP connections)
+  var smtpTransport = nodemailer.createTransport('SMTP', {
+    service: 'Gmail',
+    auth: {
+        user: process.env.EMAIL_ADDRESS,
+        pass: process.env.EMAIL_PASSWORD
+    }
+  });
+
+  var recentEmailsBuffer = [];
+}
 
 if (TWEET_BREAKING_NEWS_CANDIDATES) {
   var twit = new twitter({
@@ -520,27 +537,12 @@ function monitorWikipedia() {
         }
         // normalize article titles to follow the Wikipedia URLs
         article = article.replace(/\s/g, '_');
-        var now;
+        var now = Date.now();
         // the language format follows the IRC room format: "#language.project"
         var language = to.substring(1, to.indexOf('.'));
         editor = language + ':' + editor;
-        // used to get the language references for language clustering
-        var languageClusterUrl = 'http://' + language +
-            '.wikipedia.org/w/api.php?action=query&prop=langlinks' +
-            '&format=json&lllimit=500&titles=' + article;
-        var options = {
-          url: languageClusterUrl,
-          headers: {
-            'User-Agent': USER_AGENT
-          }
-        };
-        // get language references via the Wikipedia API
-        article = language + ':' + article;
-        request.get(options, function(error, response, body) {
-          getLanguageReferences(error, response, body, article);
-        });
 
-        // get diff URL
+        // diff URL
         var diffUrl = flagsAndDiffUrl[1];
         if ((diffUrl.indexOf('diff') !== -1) &&
             (diffUrl.indexOf('oldid') !== -1)) {
@@ -552,16 +554,53 @@ function monitorWikipedia() {
         } else {
           diffUrl = '';
         }
+
+        // delta
         deltaAndCommentRegExp = /\(([+-]\d+)\)\s(.*?)$/;
         var delta = messageComponents[2].replace(deltaAndCommentRegExp, '$1');
+
+        // comment
         var comment = messageComponents[2].replace(deltaAndCommentRegExp, '$2');
+
+        // used to get the language references for language clustering
+        var languageClusterUrl = 'http://' + language +
+            '.wikipedia.org/w/api.php?action=query&prop=langlinks' +
+            '&format=json&lllimit=500&titles=' + article;
+
+        // get language references via the Wikipedia API
+        article = language + ':' + article;
+        request.get({
+            uri: languageClusterUrl,
+            headers: {
+              'User-Agent': USER_AGENT
+            }
+          },
+          function(error, response, body) {
+            getLanguageReferences(error, response, body, article);
+          }
+        );
+
+        // get the diff URL and check if we have notable or trivial changes
+        if (diffUrl) {
+          request.get(
+            {
+              uri: diffUrl,
+              headers: {
+                'User-Agent': USER_AGENT
+              }
+            },
+            function(error, response, body) {
+              getDiffUrl(error, response, body, article, now);
+            }
+          );
+        }
+
         // new article
         if (!articleVersionsMap[article]) {
           // self-reference to detect repeatedly edited single-language version
           // articles that do not have other language versions
           articleVersionsMap[article] = article;
           // store the first occurrence of the new article
-          now = Date.now();
           articles[article] = {
             timestamp: now,
             occurrences: 1,
@@ -595,7 +634,6 @@ function monitorWikipedia() {
         // existing article
         } else {
           var currentArticle = article;
-          now = Date.now();
           if (article !== articleVersionsMap[article]) {
             io.sockets.emit('merging', {
               current: article,
@@ -683,10 +721,10 @@ function monitorWikipedia() {
             numberOfEditorsReached =
                 numberOfEditors >= NUMBER_OF_CONCURRENT_EDITORS;
           // else if we have an article in just one languge, require the
-          // double NUMBER_OF_CONCURRENT_EDITORS
+          // triple NUMBER_OF_CONCURRENT_EDITORS
           } else {
             numberOfEditorsReached =
-                numberOfEditors >= 2 * NUMBER_OF_CONCURRENT_EDITORS;
+                numberOfEditors >= 3 * NUMBER_OF_CONCURRENT_EDITORS;
           }
           // search for all article titles in social networks
           var searchTerms = {};
@@ -731,108 +769,99 @@ function monitorWikipedia() {
                   '. Editors: ' + articles[article].editors + '. ' +
                   'Languages: ' + JSON.stringify(articles[article].languages));
             }
-            // get the diff URL and check if we have notable or trivial changes
-            var options = {
-              url: diffUrl,
-              headers: {
-                'User-Agent': USER_AGENT
+            // check if all three breaking news conditions are fulfilled
+            // at once
+            if ((breakingNewsThresholdReached) &&
+                (allEditsInShortDistances) &&
+                (numberOfEditorsReached)) {
+              io.sockets.emit('breakingNewsCandidate', {
+                article: article,
+                occurrences: articles[article].occurrences,
+                timestamp: new Date(articles[article].timestamp) + '',
+                editIntervals: articles[article].intervals,
+                editors: articles[article].editors,
+                languages: articles[article].languages,
+                versions: articles[article].versions,
+                changes: articles[article].changes,
+                conditions: {
+                  breakingNewsThreshold: breakingNewsThresholdReached,
+                  secondsBetweenEdits: allEditsInShortDistances,
+                  numberOfConcurrentEditors: numberOfEditorsReached
+                },
+                socialNetworksResults: socialNetworksResults
+              });
+              if (TWEET_BREAKING_NEWS_CANDIDATES) {
+                // the actual breaking news article language version may
+                // vary, however, to avoid over-tweeting, tweet only
+                // once, i.e., look up the main article in the
+                // articleVersionsMap
+                tweet(
+                    articleVersionsMap[article],
+                    articles[article].occurrences,
+                    articles[article].editors.length,
+                    Object.keys(articles[article].languages).length,
+                    socialNetworksResults);
               }
-            };
-            if (!diffUrl) {
-              return;
+              if (EMAIL_BREAKING_NEWS_CANDIDATES) {
+                email(articleVersionsMap[article], socialNetworksResults);
+              }
+              if (VERBOUS) {
+                console.log('[ ★ ] Breaking news candidate: "' +
+                    article + '". ' +
+                    articles[article].occurrences + ' ' +
+                    'times seen. ' +
+                    'Timestamp: ' +
+                    new Date(articles[article].timestamp) +
+                    '. Edit intervals: ' +
+                    articles[article].intervals.toString()
+                    .replace(/(\d+),?/g, '$1ms ').trim() + '. ' +
+                    'Number of editors: ' +
+                    articles[article].editors.length + '. ' +
+                    'Editors: ' + articles[article].editors + '. ' +
+                    'Languages: ' +
+                    JSON.stringify(articles[article].languages));
+              }
             }
-            request.get(options, function(error, response, body) {
-              if (!error) {
-                var json;
-                try {
-                  json = JSON.parse(body);
-                } catch(e) {
-                  json = false;
-                }
-                if (json && json.compare && json.compare['*']) {
-                  var parsedHtml = $.load(json.compare['*']);
-                  var addedLines = parsedHtml('.diff-addedline');
-                  var diffTexts = [];
-                  var diffConcepts = [];
-                  addedLines.each(function(i, elem) {
-                    var text = $(this).text().trim();
-                    var concepts = extractWikiConcepts(text,
-                        articles[article].changes[now].language);
-                    if (concepts) {
-                      diffConcepts.concat(concepts);
-                    }
-                    text = removeWikiNoise(text);
-                    text = removeWikiMarkup(text);
-                    if (text) {
-                      diffTexts.push(text);
-                    }
-                  });
-                  if (!diffTexts) {
-                    return;
-                  }
-                  articles[article].changes[now].diffTexts = diffTexts;
-                  articles[article].changes[now].namedEntities = diffConcepts;
-                  // check if all three breaking news conditions are fulfilled
-                  // at once
-                  if ((breakingNewsThresholdReached) &&
-                      (allEditsInShortDistances) &&
-                      (numberOfEditorsReached)) {
-                    io.sockets.emit('breakingNewsCandidate', {
-                      article: article,
-                      occurrences: articles[article].occurrences,
-                      timestamp: new Date(articles[article].timestamp) + '',
-                      editIntervals: articles[article].intervals,
-                      editors: articles[article].editors,
-                      languages: articles[article].languages,
-                      versions: articles[article].versions,
-                      changes: articles[article].changes,
-                      conditions: {
-                        breakingNewsThreshold: breakingNewsThresholdReached,
-                        secondsBetweenEdits: allEditsInShortDistances,
-                        numberOfConcurrentEditors: numberOfEditorsReached
-                      },
-                      socialNetworksResults: socialNetworksResults
-                    });
-                    if (TWEET_BREAKING_NEWS_CANDIDATES) {
-                      // the actual breaking news article language version may
-                      // vary, however, to avoid over-tweeting, tweet only
-                      // once, i.e., look up the main article in the
-                      // articleVersionsMap
-                      tweet(
-                          articleVersionsMap[article],
-                          articles[article].occurrences,
-                          articles[article].editors.length,
-                          Object.keys(articles[article].languages).length,
-                          socialNetworksResults);
-                    }
-                    if (VERBOUS) {
-                      console.log('[ ★ ] Breaking news candidate: "' +
-                          article + '". ' +
-                          articles[article].occurrences + ' ' +
-                          'times seen. ' +
-                          'Timestamp: ' +
-                          new Date(articles[article].timestamp) +
-                          '. Edit intervals: ' +
-                          articles[article].intervals.toString()
-                          .replace(/(\d+),?/g, '$1ms ').trim() + '. ' +
-                          'Number of editors: ' +
-                          articles[article].editors.length + '. ' +
-                          'Editors: ' + articles[article].editors + '. ' +
-                          'Languages: ' +
-                          JSON.stringify(articles[article].languages));
-                    }
-                  }
-                }
-              } else {
-                console.warn('Wikipedia API error while getting diff text.' +
-                    (response? ' Status Code: ' + response.statusCode : ''));
-              }
-            });
           });
         }
       }
     }
   });
+}
+
+function getDiffUrl(error, response, body, article, now) {
+  if (!error) {
+    var json;
+    try {
+      json = JSON.parse(body);
+    } catch(e) {
+      json = false;
+    }
+    if (json && json.compare && json.compare['*']) {
+      var parsedHtml = $.load(json.compare['*']);
+      var addedLines = parsedHtml('.diff-addedline');
+      var diffTexts = [];
+      var diffConcepts = [];
+      addedLines.each(function(i, elem) {
+        var text = $(this).text().trim();
+        var concepts = extractWikiConcepts(text,
+            articles[article].changes[now].language);
+        if (concepts) {
+          diffConcepts.concat(concepts);
+        }
+        text = removeWikiNoise(text);
+        text = removeWikiMarkup(text);
+        if (text) {
+          diffTexts.push(text);
+        }
+      });
+      articles[article].changes[now].diffTexts = diffTexts;
+      articles[article].changes[now].namedEntities = diffConcepts;
+    }
+  } else {
+    console.warn('Wikipedia API error while getting diff text.' +
+        (response? ' Status Code: ' + response.statusCode : ''));
+  }
 }
 
 function strip_tags (input, allowed) {
@@ -1039,6 +1068,166 @@ function createWikipediaUrl(article) {
       encodeURIComponent(components[1]);
 }
 
+function email(article, microposts) {
+  var wikipediaUrl = createWikipediaUrl(article);
+  // if we have already emailed the current URL, don't email it again
+  if (recentEmailsBuffer.indexOf(wikipediaUrl) !== -1) {
+    console.log('Already emailed about ' + wikipediaUrl);
+    return;
+  }
+  // keep the recent emails buffer at most 10 elements long
+  recentEmailsBuffer.push(wikipediaUrl);
+  if (recentEmailsBuffer.length > 10) {
+    recentEmailsBuffer.shift();
+  }
+  console.log('Recent emails buffer length: ' + recentEmailsBuffer.length);
+
+  var generateHtmlMail = function() {
+    var preg_quote = function(str, delimiter) {
+      // http://kevin.vanzonneveld.net
+      // +   original by: booeyOH
+      // +   improved by: Ates Goral (http://magnetiq.com)
+      // +   improved by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
+      // +   bugfixed by: Onno Marsman
+      // +   improved by: Brett Zamir (http://brett-zamir.me)
+      // *     example 1: preg_quote("$40");
+      // *     returns 1: '\$40'
+      // *     example 2: preg_quote("*RRRING* Hello?");
+      // *     returns 2: '\*RRRING\* Hello\?'
+      // *     example 3: preg_quote("\\.+*?[^]$(){}=!<>|:");
+      // *     returns 3: '\\\.\+\*\?\[\^\]\$\(\)\{\}\=\!\<\>\|\:'
+      return (str + '').replace(new RegExp('[.\\\\+*?\\[\\^\\]$(){}=!<>|:\\' +
+          (delimiter || '') + '-]', 'g'), '\\$&');
+    };
+
+    // converts a user name like en:Jon_Doe to a valid Wikipedia user profile
+    // link like so: http://en.wikipedia.org/wiki/User:Jon_Doe. Ignore
+    // anonymous users
+    var linkifyEditor = function(user) {
+      var components = user.split(':');
+      if (/\b(?:\d{1,3}\.){3}\d{1,3}\b/.test(user)) {
+        return '<a class="user">' + components[1] + '</a>';
+      }
+      return '<a class="user" href="http://' +
+          components[0].replace(/(\w+),.*/, '$1') +
+          '.wikipedia.org/wiki/User:' + components[1] + '">' + components[1] +
+          '</a>';
+    };
+
+    var imgUrl = 'https://raw.github.com/tomayac/wikipedia-irc/master/static/';
+    var html = '';
+    var image =
+        '<img src="' + imgUrl +
+        article.split(':')[0] + '.png">';
+    html += '<h1 style="font-size: 1.2em;">Breaking News Candidate<br><nobr>' +
+        image + ' <a href="' + wikipediaUrl + '">' +
+        decodeURIComponent(wikipediaUrl) + '</a></nobr></h1>';
+    html += '<h2 style="font-size: 1.0em;">All Language Versions</h2>';
+    if (Object.keys(articles[article].versions).length) {
+      html += '<ul>';
+      for (var version in articles[article].versions) {
+        var url = createWikipediaUrl(version);
+        html += '<li>' + '<nobr><img src="' + imgUrl + version.split(':')[0] +
+            '.png"> <a href="' + url + '">' + decodeURIComponent(url) + '</a>' +
+            '</nobr></li>';
+      }
+      html += '</ul>';
+    }
+    html += '<h2 style="font-size: 1.0em;">Last Edits</h2><ul>';
+    for (var timestamp in articles[article].changes) {
+      var change = articles[article].changes[timestamp];
+      html += '<li><nobr><img src="' + imgUrl + change.language + '.png"> ' +
+          linkifyEditor(change.editor) + ': ' +
+          '</nobr><span style="font-style: italic; font-size: 0.8em;">' +
+          (change.comment ? change.comment : 'N/A') + '</span> ' +
+          '(<a href="' + change.diffUrl + '"><span style="' +
+          (change.delta.indexOf('+') === -1 ? 'color:red;' : 'color:green;') +
+          '">' + change.delta + '</span></a>) ';
+      if (change.diffTexts) {
+        html += '<ul>';
+        change.diffTexts.forEach(function(diffText) {
+          html += '<li><span style="font-style: italic; font-size: 0.8em; ' +
+              'color: gray;">' + diffText + '</span>';
+        });
+        html += '</ul>';
+      }
+    }
+    html += '</ul>';
+    if (microposts) {
+      var socialHtml = '';
+      var now = Date.now();
+      for (var term in microposts) {
+        // only append the term if microposts exist. need to iterate over all
+        // networks and check the freshness. ugly, but works.
+        var resultsExistForTerm = false;
+        for (var network in microposts[term]) {
+          if (Array.isArray(microposts[term][network])) {
+            microposts[term][network].forEach(function(item) {
+              // not older than 1h: 1 * 60 * 60 * 1000 = 3600000
+              if (now - item.timestamp < 3600000) {
+                resultsExistForTerm = true;
+              }
+            });
+          }
+        }
+        if (resultsExistForTerm) {
+          socialHtml += '<li><b>' + term + '</b>';
+        }
+        for (var network in microposts[term]) {
+          if (Array.isArray(microposts[term][network])) {
+            microposts[term][network].forEach(function(item) {
+              // not older than 1h: 1 * 60 * 60 * 1000 = 3600000
+              if (now - item.timestamp < 3600000) {
+                var micropost = item.micropost;
+                if (micropost.length > 140) {
+                  micropost = micropost.substring(0, 140) + ' […]';
+                }
+                socialHtml += '<br/><img style="width: 16px; height: 16px; ' +
+                    'border-radius: 5px; vertical-align: middle;" src="' +
+                    item.avatar + '"/> ' +
+                    '<img style="width: 16px; height: 16px; ' +
+                    'border-radius: 5px; vertical-align: middle;" src="' +
+                    imgUrl + network.toLowerCase() + '.png"/> <small> ' +
+                    '<a href="' + item.profileLink + '">' +
+                    item.user + '</a> (<a href="' + item.deepLink + '">' +
+                    new Date(item.timestamp).toString().substring(0,24) +
+                    '</span></a>): ' + micropost.replace(
+                        new RegExp('(' + preg_quote(term) + ')', 'gi'),
+                        '<span style="background-color: yellow;">$1</span>') +
+                    '</small>';
+              }
+            });
+          }
+        }
+        socialHtml += '</li>';
+      }
+    }
+    if (socialHtml) {
+      html += '<h2 style="font-size: 1.0em;">Social Network Coverage</h2><ul>'
+          socialHtml + '</ul>';
+    }
+    return html;
+  };
+
+  // setup e-mail data with unicode symbols
+  var mailOptions = {
+      from: 'Wikipedia Live Monitor <' + process.env.EMAIL_ADDRESS + '>',
+      to: process.env.EMAIL_RECEIVER,
+      subject: 'Breaking News Candidate: ' + wikipediaUrl,
+      generateTextFromHTML: true,
+      forceEmbeddedImages: true,
+      html: generateHtmlMail()
+  };
+  // send mail with defined transport object
+  smtpTransport.sendMail(mailOptions, function(error, response) {
+    if (error) {
+      console.log(error);
+    } else{
+      console.log('Message sent: ' + response.message);
+    }
+  });
+}
+
 function tweet(article, occurrences, editors, languages, microposts) {
   var wikipediaUrl = createWikipediaUrl(article);
   // if we have already tweeted the current URL, don't tweet it again
@@ -1085,7 +1274,9 @@ function tweet(article, occurrences, editors, languages, microposts) {
         new Array(TWITTER_SHORT_URL_LENGTH - 11).join('x');
     var previewTweet = text.replace(urlRegEx, pseudoShortLink);
     for (var i = previewTweet.length, j = 0, len = socialUpdates.length; i < 138 && j < len; i += TWITTER_SHORT_URL_LENGTH + 2, j++) {
-      previewTweet += (j > 0 ? ', ' + socialUpdates[j].replace(urlRegEx, pseudoShortLink) : socialUpdates[j].replace(urlRegEx, pseudoShortLink));
+      previewTweet += (j > 0 ?
+          ', ' + socialUpdates[j].replace(urlRegEx, pseudoShortLink) :
+          socialUpdates[j].replace(urlRegEx, pseudoShortLink));
       text += (j > 0 ? ', ' + socialUpdates[j] : socialUpdates[j]);
     }
     text += ']';

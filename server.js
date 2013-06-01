@@ -1199,7 +1199,9 @@ function email(article, microposts) {
             });
           }
         }
-        socialHtml += '</li>';
+        if (resultsExistForTerm) {
+          socialHtml += '</li>';
+        }
       }
     }
     if (socialHtml) {

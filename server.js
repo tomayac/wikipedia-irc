@@ -1203,7 +1203,7 @@ function email(article, microposts) {
       }
     }
     if (socialHtml) {
-      html += '<h2 style="font-size: 1.0em;">Social Network Coverage</h2><ul>'
+      html += '<h2 style="font-size: 1.0em;">Social Network Coverage</h2><ul>' +
           socialHtml + '</ul>';
     }
     return html;

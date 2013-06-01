@@ -1213,7 +1213,7 @@ function email(article, microposts) {
   var mailOptions = {
       from: 'Wikipedia Live Monitor <' + process.env.EMAIL_ADDRESS + '>',
       to: process.env.EMAIL_RECEIVER,
-      subject: 'Breaking News Candidate: ' + wikipediaUrl,
+      subject: 'Breaking News Candidate: ' + decodeURIComponent(wikipediaUrl),
       generateTextFromHTML: true,
       forceEmbeddedImages: true,
       html: generateHtmlMail()

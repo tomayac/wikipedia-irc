@@ -7,7 +7,8 @@
     "request": "2.11.x",
     "socket.io": "0.9.x",
     "ntwitter": "0.5.x",
-    "cheerio": "0.11.x"
+    "cheerio": "0.11.x",
+    "nodemailer": "0.4.x"
   },
   "engines": {
     "node": "0.8.x",

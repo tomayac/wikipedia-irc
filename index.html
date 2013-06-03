@@ -9,7 +9,15 @@
     <link rel="stylesheet" href="main.css" />
   </head>
   <body>
-    <div id="followCallToAction">Tweeting breaking news candidates</div>
+    <div id="callsToAction">
+      <ul>
+        <li><span class="highlight">Tweeting</span> breaking news candidates</li>
+        <li>Join the
+          <a href="https://groups.google.com/forum/#!forum/wikipedialivemonitor">Google Group</a>
+          for <span class="highlight">email alerts</a>
+        </li>
+      </ul>
+    </div>
     <iframe id="followWidget" allowtransparency="true" frameborder="0" scrolling="no"
       src="//platform.twitter.com/widgets/follow_button.html?screen_name=WikiLiveMon&show_count=false&lang=en&show_screen_name=true&dnt=true"
       style="width:300px; height:20px;"></iframe>
@@ -300,7 +308,7 @@
                       humaneDate(new Date(item.timestamp)) +
                       '</span></a>): ' + micropost.replace(
                           new RegExp('(' + preg_quote(term) + ')', 'gi'),
-                          '<span style="background-color: yellow;">$1</span>') +
+                          '<span class="highlight">$1</span>') +
                       '</small>';
                 }
               });

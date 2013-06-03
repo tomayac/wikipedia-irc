@@ -109,11 +109,10 @@ DIV.settings {
   overflow: hidden;
 }
 
-#followCallToAction {
+#callsToAction {
   font-size: 0.7em;
-  background-color: yellow;
   position: absolute;
-  top: 25px;
+  top: 10px;
   right: 400px;
 }
 
@@ -121,6 +120,10 @@ DIV.settings {
   position: absolute;
   top: 20px;
   right: 80px;
+}
+
+SPAN.highlight {
+  background-color: yellow;
 }
 
 SPAN.value {

@@ -15,13 +15,20 @@ var wiki2html = require('./wiki2html.js');
 var VERBOUS = true;
 // really very verbous debug mode
 var REALLY_VERBOUS = false;
+// use WebSocket reporting
+var USE_WEBSOCKETS = true;
 
-// whether to only monitor the 1,000,000+ articles Wikipedias,
-// or also the 100,000+ articles Wikipedias.
-var MONITOR_LONG_TAIL_WIKIPEDIAS = true;
+// whether to monitor the 1,000,000+ articles Wikipedias
+var MONITOR_SHORT_TAIL_WIKIPEDIAS = false;
+
+// whether to monitor the 100,000+ articles Wikipedias
+var MONITOR_LONG_TAIL_WIKIPEDIAS = false;
 
 // whether to also monitor the << 100,000+ articles Wikipedias
-var MONITOR_REALLY_LONG_TAIL_WIKIPEDIAS = true;
+var MONITOR_REALLY_LONG_TAIL_WIKIPEDIAS = false;
+
+// whether to monitor the knowledge base Wikidata
+var MONITOR_WIKIDATA = true;
 
 // required for Wikipedia API
 var USER_AGENT = 'Wikipedia Live Monitor * IRC nick: wikipedia-live-monitor * Contact: tomac(a)google.com.';
@@ -412,11 +419,17 @@ var reallyLongTailWikipedias = [].concat(
     onePlusLanguages,
     zeroLanguages);
 
+var wikidata = {
+  wikidata: true
+};
+
 var IRC_CHANNELS = [];
 var PROJECT = '.wikipedia';
-Object.keys(millionPlusLanguages).forEach(function(language) {
-  IRC_CHANNELS.push('#' + language + PROJECT);
-});
+if (MONITOR_SHORT_TAIL_WIKIPEDIAS) {
+  Object.keys(millionPlusLanguages).forEach(function(language) {
+    IRC_CHANNELS.push('#' + language + PROJECT);
+  });
+}
 if (MONITOR_LONG_TAIL_WIKIPEDIAS) {
   Object.keys(oneHundredThousandPlusLanguages).forEach(function(language) {
     IRC_CHANNELS.push('#' + language + PROJECT);
@@ -439,6 +452,11 @@ if (MONITOR_REALLY_LONG_TAIL_WIKIPEDIAS) {
     IRC_CHANNELS.push('#' + language + PROJECT);
   });
   Object.keys(zeroLanguages).forEach(function(language) {
+    IRC_CHANNELS.push('#' + language + PROJECT);
+  });
+}
+if (MONITOR_WIKIDATA) {
+  Object.keys(wikidata).forEach(function(language) {
     IRC_CHANNELS.push('#' + language + PROJECT);
   });
 }
@@ -618,13 +636,17 @@ function monitorWikipedia() {
             editor: editor,
             comment: comment ? comment : ''
           };
-          io.sockets.emit('firstTimeSeen', {
-            article: article,
-            timestamp: new Date(articles[article].timestamp).toString(),
-            editors: [editor],
-            languages: articles[article].languages,
-            versions: articles[article].versions
-          });
+          // reporting WebSockets
+          if (USE_WEBSOCKETS) {
+            io.sockets.emit('firstTimeSeen', {
+              article: article,
+              timestamp: new Date(articles[article].timestamp).toString(),
+              editors: [editor],
+              languages: articles[article].languages,
+              versions: articles[article].versions
+            });
+          }
+          // reporting console
           if (VERBOUS && REALLY_VERBOUS) {
             console.log('[ * ] First time seen: "' + article + '". ' +
                 'Timestamp: ' + new Date(articles[article].timestamp) + '. ' +
@@ -635,11 +657,15 @@ function monitorWikipedia() {
         } else {
           var currentArticle = article;
           if (article !== articleVersionsMap[article]) {
-            io.sockets.emit('merging', {
-              current: article,
-              existing: articleVersionsMap[article],
-              timestamp: new Date(now).toString()
-            });
+            // reporting WebSockets
+            if (USE_WEBSOCKETS) {
+              io.sockets.emit('merging', {
+                current: article,
+                existing: articleVersionsMap[article],
+                timestamp: new Date(now).toString()
+              });
+            }
+            // reporting console
             if (VERBOUS) {
               console.log('[ ⚭ ] Merging ' + article + ' with ' +
                   articleVersionsMap[article]);
@@ -743,22 +769,26 @@ function monitorWikipedia() {
             }
           }
           socialNetworkSearch(searchTerms, function(socialNetworksResults) {
-            io.sockets.emit('nTimesSeen', {
-              article: article,
-              occurrences: articles[article].occurrences,
-              timestamp: new Date(articles[article].timestamp).toString(),
-              editIntervals: articles[article].intervals,
-              editors: articles[article].editors,
-              languages: articles[article].languages,
-              versions: articles[article].versions,
-              changes: articles[article].changes,
-              conditions: {
-                breakingNewsThreshold: breakingNewsThresholdReached,
-                secondsBetweenEdits: allEditsInShortDistances,
-                numberOfConcurrentEditors: numberOfEditorsReached
-              },
-              socialNetworksResults: socialNetworksResults
-            });
+            // reporting WebSockets
+            if (USE_WEBSOCKETS) {
+              io.sockets.emit('nTimesSeen', {
+                article: article,
+                occurrences: articles[article].occurrences,
+                timestamp: new Date(articles[article].timestamp).toString(),
+                editIntervals: articles[article].intervals,
+                editors: articles[article].editors,
+                languages: articles[article].languages,
+                versions: articles[article].versions,
+                changes: articles[article].changes,
+                conditions: {
+                  breakingNewsThreshold: breakingNewsThresholdReached,
+                  secondsBetweenEdits: allEditsInShortDistances,
+                  numberOfConcurrentEditors: numberOfEditorsReached
+                },
+                socialNetworksResults: socialNetworksResults
+              });
+            }
+            // reporting console
             if (VERBOUS) {
               console.log('[ ! ] ' + articles[article].occurrences + ' ' +
                   'times seen: "' + article + '". ' +
@@ -774,22 +804,25 @@ function monitorWikipedia() {
             if ((breakingNewsThresholdReached) &&
                 (allEditsInShortDistances) &&
                 (numberOfEditorsReached)) {
-              io.sockets.emit('breakingNewsCandidate', {
-                article: article,
-                occurrences: articles[article].occurrences,
-                timestamp: new Date(articles[article].timestamp) + '',
-                editIntervals: articles[article].intervals,
-                editors: articles[article].editors,
-                languages: articles[article].languages,
-                versions: articles[article].versions,
-                changes: articles[article].changes,
-                conditions: {
-                  breakingNewsThreshold: breakingNewsThresholdReached,
-                  secondsBetweenEdits: allEditsInShortDistances,
-                  numberOfConcurrentEditors: numberOfEditorsReached
-                },
-                socialNetworksResults: socialNetworksResults
-              });
+              // reporting WebSockets
+              if (USE_WEBSOCKETS) {
+                io.sockets.emit('breakingNewsCandidate', {
+                  article: article,
+                  occurrences: articles[article].occurrences,
+                  timestamp: new Date(articles[article].timestamp) + '',
+                  editIntervals: articles[article].intervals,
+                  editors: articles[article].editors,
+                  languages: articles[article].languages,
+                  versions: articles[article].versions,
+                  changes: articles[article].changes,
+                  conditions: {
+                    breakingNewsThreshold: breakingNewsThresholdReached,
+                    secondsBetweenEdits: allEditsInShortDistances,
+                    numberOfConcurrentEditors: numberOfEditorsReached
+                  },
+                  socialNetworksResults: socialNetworksResults
+                });
+              }
               if (TWEET_BREAKING_NEWS_CANDIDATES) {
                 // the actual breaking news article language version may
                 // vary, however, to avoid over-tweeting, tweet only
@@ -805,6 +838,7 @@ function monitorWikipedia() {
               if (EMAIL_BREAKING_NEWS_CANDIDATES) {
                 email(articleVersionsMap[article], socialNetworksResults);
               }
+              // reporting console
               if (VERBOUS) {
                 console.log('[ ★ ] Breaking news candidate: "' +
                     article + '". ' +
@@ -829,6 +863,7 @@ function monitorWikipedia() {
   });
 }
 
+// retrieves the diff URL of an article and stores the cleaned diff text
 function getDiffUrl(error, response, body, article, now) {
   if (!error) {
     var json;
@@ -864,6 +899,7 @@ function getDiffUrl(error, response, body, article, now) {
   }
 }
 
+// removes HTML tags from text (like the PHP function with the same name)
 function strip_tags (input, allowed) {
   // http://kevin.vanzonneveld.net
   // +   original by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
@@ -905,6 +941,7 @@ function strip_tags (input, allowed) {
   });
 }
 
+// extracts Wikipedia concepts (i.e., interwiki links)
 function extractWikiConcepts(text, language) {
   var concepts = [];
   text = text.replace(/\[\[(.*?)\]\]/g, function(m, l) {
@@ -923,6 +960,7 @@ function extractWikiConcepts(text, language) {
   return concepts;
 }
 
+// removes noise from the diff text of article edits
 function removeWikiNoise(text) {
   // remove things like [[Kategorie:Moravske Toplice| Moravske Toplice]]
   var namespaceNoiseRegEx = /\[\[.*?\:.*?\]\]/g;
@@ -946,6 +984,7 @@ function removeWikiNoise(text) {
   return text;
 }
 
+// removes wiki markup from the diff text of article edits
 function removeWikiMarkup(text) {
   var tableMarkupRegEx = /\|/g;
   text = strip_tags(wiki2html(text));
@@ -998,45 +1037,40 @@ function getLanguageReferences(error, response, body, article) {
   }
 }
 
-// start static serving
-// and set default route to index.html
-app.use(express.static(__dirname + '/static'));
-app.get('/', function(req, res) {
-  res.sendfile(__dirname + '/index.html');
-});
-
 // setting up the Web Socket-based communication with the front-end
-io.set('log level', 1);
-io.sockets.on('connection', function(socket) {
-  // send the default settings
-  socket.emit('defaultSettings', {
-    secondsSinceLastEdit: SECONDS_SINCE_LAST_EDIT,
-    secondsBetweenEdits: SECONDS_BETWEEN_EDITS,
-    breakingNewsThreshold: BREAKING_NEWS_THRESHOLD,
-    numberOfConcurrentEditors: NUMBER_OF_CONCURRENT_EDITORS
-  });
+if (USE_WEBSOCKETS) {
+  io.set('log level', 1);
+  io.sockets.on('connection', function(socket) {
+    // send the default settings
+    socket.emit('defaultSettings', {
+      secondsSinceLastEdit: SECONDS_SINCE_LAST_EDIT,
+      secondsBetweenEdits: SECONDS_BETWEEN_EDITS,
+      breakingNewsThreshold: BREAKING_NEWS_THRESHOLD,
+      numberOfConcurrentEditors: NUMBER_OF_CONCURRENT_EDITORS
+    });
 
-  // react on settings changes
-  socket.on('secondsSinceLastEdit', function(data) {
-    SECONDS_SINCE_LAST_EDIT = data.value;
-    console.log('Setting SECONDS_SINCE_LAST_EDIT to: ' +
-        SECONDS_SINCE_LAST_EDIT);
+    // react on settings changes
+    socket.on('secondsSinceLastEdit', function(data) {
+      SECONDS_SINCE_LAST_EDIT = data.value;
+      console.log('Setting SECONDS_SINCE_LAST_EDIT to: ' +
+          SECONDS_SINCE_LAST_EDIT);
+    });
+    socket.on('secondsBetweenEdits', function(data) {
+      SECONDS_BETWEEN_EDITS = data.value;
+      console.log('Setting SECONDS_BETWEEN_EDITS to: ' + SECONDS_BETWEEN_EDITS);
+    });
+    socket.on('breakingNewsThreshold', function(data) {
+      BREAKING_NEWS_THRESHOLD = data.value;
+      console.log('Setting BREAKING_NEWS_THRESHOLD to: ' +
+          BREAKING_NEWS_THRESHOLD);
+    });
+    socket.on('numberOfConcurrentEditors', function(data) {
+      NUMBER_OF_CONCURRENT_EDITORS = data.value;
+      console.log('Setting NUMBER_OF_CONCURRENT_EDITORS to: ' +
+          NUMBER_OF_CONCURRENT_EDITORS);
+    });
   });
-  socket.on('secondsBetweenEdits', function(data) {
-    SECONDS_BETWEEN_EDITS = data.value;
-    console.log('Setting SECONDS_BETWEEN_EDITS to: ' + SECONDS_BETWEEN_EDITS);
-  });
-  socket.on('breakingNewsThreshold', function(data) {
-    BREAKING_NEWS_THRESHOLD = data.value;
-    console.log('Setting BREAKING_NEWS_THRESHOLD to: ' +
-        BREAKING_NEWS_THRESHOLD);
-  });
-  socket.on('numberOfConcurrentEditors', function(data) {
-    NUMBER_OF_CONCURRENT_EDITORS = data.value;
-    console.log('Setting NUMBER_OF_CONCURRENT_EDITORS to: ' +
-        NUMBER_OF_CONCURRENT_EDITORS);
-  });
-});
+}
 
 // clean-up function, called regularly like a garbage collector
 function cleanUpMonitoringLoop() {
@@ -1057,9 +1091,11 @@ function cleanUpMonitoringLoop() {
       }
     }
   }
-  io.sockets.emit('stats', {
-    clustersLeft: Object.keys(articleClusters).length
-  });
+  if (USE_WEBSOCKETS) {
+    io.sockets.emit('stats', {
+      clustersLeft: Object.keys(articleClusters).length
+    });
+  }
 }
 
 function createWikipediaUrl(article) {
@@ -1080,7 +1116,6 @@ function email(article, microposts) {
   if (recentEmailsBuffer.length > 10) {
     recentEmailsBuffer.shift();
   }
-  console.log('Recent emails buffer length: ' + recentEmailsBuffer.length);
 
   var generateHtmlMail = function() {
     var preg_quote = function(str, delimiter) {
@@ -1223,7 +1258,7 @@ function email(article, microposts) {
   // send mail with defined transport object
   smtpTransport.sendMail(mailOptions, function(error, response) {
     if (error) {
-      console.log(error);
+      console.warn(error);
     } else{
       console.log('Message sent: ' + response.message);
     }
@@ -1242,7 +1277,6 @@ function tweet(article, occurrences, editors, languages, microposts) {
   if (recentTweetsBuffer.length > 10) {
     recentTweetsBuffer.shift();
   }
-  console.log('Recent tweets buffer length: ' + recentTweetsBuffer.length);
 
   var socialUpdates = [];
   var now = Date.now();
@@ -1292,6 +1326,13 @@ function tweet(article, occurrences, editors, languages, microposts) {
     }
   });
 }
+
+// start static serving
+// and set default route to index.html
+app.use(express.static(__dirname + '/static'));
+app.get('/', function(req, res) {
+  res.sendfile(__dirname + '/index.html');
+});
 
 // start garbage collector
 setInterval(function() {

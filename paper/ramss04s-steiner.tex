@@ -82,22 +82,22 @@
 \alignauthor
 Thomas Steiner\thanks{This work was partially supported by the European Commission
 under Grant No.~248296 FP7 \mbox{I-SEARCH} project.}\\
-	\affaddr{Google Germany GmbH}\\
-	\affaddr{ABC-Str. 19}\\
-	\affaddr{20354 Hamburg, Germany}\\
-	\email{tomac@google.com} 
+  \affaddr{Google Germany GmbH}\\
+  \affaddr{ABC-Str. 19}\\
+  \affaddr{20354 Hamburg, Germany}\\
+  \email{tomac@google.com}
 \alignauthor
 Seth van Hooland\\
-	\affaddr{Université Libre de Bruxelles}\\
-	\affaddr{Avenue F.D. Roosevelt, 16}\\
-	\affaddr{1050 Brussels, Belgium}\\
-	\email{svhoolan@ulb.ac.be}	
+  \affaddr{Université Libre de Bruxelles}\\
+  \affaddr{Avenue F.D. Roosevelt, 16}\\
+  \affaddr{1050 Brussels, Belgium}\\
+  \email{svhoolan@ulb.ac.be}
 \alignauthor
 Ed Summers\\
-	\affaddr{Library of Congress}\\
-	\affaddr{101 Independence Ave, SE}\\
-	\affaddr{Washington, DC 20540, USA}\\
-	\email{edsu@loc.gov}	
+  \affaddr{Library of Congress}\\
+  \affaddr{101 Independence Ave, SE}\\
+  \affaddr{Washington, DC 20540, USA}\\
+  \email{edsu@loc.gov}
 }
 \maketitle
 \begin{abstract}
@@ -118,7 +118,7 @@ we can exploit this fact to detect \emph{concurrent edit spikes}
 of Wikipedia articles covering the same topics,
 both in only one, and in different languages.
 We treat such concurrent edit spikes as signals
-for potential breaking news events, whose plausibility we then check 
+for potential breaking news events, whose plausibility we then check
 with full-text cross-language searches on multiple social networks.
 Unlike the reverse approach of monitoring social networks first,
 and potentially checking plausibility on Wikipedia second,
@@ -128,7 +128,7 @@ to true-positive events, however, at only a~fraction of the processing cost.
 A~live demo of our application is available online
 at the URL \url{http://wikipedia-irc.herokuapp.com/},
 the source code is available
-under the terms of the Apache~2.0 license at 
+under the terms of the Apache~2.0 license at
 \url{https://github.com/tomayac/wikipedia-irc}.
 
 \end{abstract}
@@ -183,7 +183,7 @@ We are led by the following hypotheses.
   \item[(H2)] If a~breaking news event is important, it will be reflected on
     at least one language edition of Wikipedia.
   \item[(H3)] The time between when the news broke first and the news
-    being reflected on Wikipedia is considerably short.   
+    being reflected on Wikipedia is considerably short.
 \end{itemize}
 
 \noindent These hypotheses lead us to the research questions below.
@@ -260,7 +260,7 @@ Our \emph{Wikipedia Live Monitor} is partly based on an application called
 
 As described earlier, our application monitors concurrent edit spikes
 on different language versions of Wikipedia.
-In the current implementation, we monitor 42 different Wiki\-pedias, 5 with 
+In the current implementation, we monitor 42 different Wiki\-pedias, 5 with
 $\geq$~1,000,000 and 37 with $\geq$~100,000 articles.%
 \footnote{List of Wikipedias by size: \url{http://meta.wikimedia.org/wiki/List_of_Wikipedias},
 accessed 02/18/2013}
@@ -309,14 +309,14 @@ and modifications in a~\texttt{diff}-like manner.
 The URL pattern is as follows.
 \url{http://$LANGUAGE.wikipedia.org/w/api.php?action=compare&torev=$TO&fromrev=$FROM&format=json}. %$%
 This allows us to classify edits in categories, like, \emph{e.g.},
-negligible trivial edits (punctuation correction) and 
+negligible trivial edits (punctuation correction) and
 major important edits (new paragraph for an article),
 which helps us to disregard seemingly concurrent edits
 in order to avoid false-positive alerts.
 
 \subsection{Breaking News Criteria}
 
-Our application \emph{Wikipedia Live Monitor} puts  
+Our application \emph{Wikipedia Live Monitor} puts
 detected article clusters in a~monitoring loop in which they remain
 until their time-to-live (240~seconds) is over.
 In order for an article cluster in the monitoring loop
@@ -346,7 +346,7 @@ accessed 02/18/2013}
 \subsection{Social Network Plausibility Checks}
 
 When a~breaking news candidate has been identified,
-we use cross-language full-text social network searches 
+we use cross-language full-text social network searches
 on the social networks Twitter, Facebook, and \googleplus
 as a~plausibility check.
 As the \emph{article titles} of all language versions
@@ -374,7 +374,7 @@ Programs are created using event-driven, asynchronous input/output operations
 to minimize overhead and maximize scalability.
 \autoref{code:pseudocode} shows the pseudocode of the two main event loops of the
 \emph{Wikipedia Live Monitor} application.
-The actual implementation is based on 
+The actual implementation is based on
 Martyn Smith's Node.js IRC library%
 \footnote{Node.js IRC library: \url{https://github.com/martynsmith/node-irc},
 accessed 02/18/2013} and
@@ -386,43 +386,43 @@ accessed 02/18/2013}
 \begin{lstlisting}[caption=The two main event loops
   of the application,
   label=code:pseudocode, float=b!]
-§\textbf{Input: irc, listening on Wikipedia recent changes}§ 
-§\textbf{Output: breakingNewsCandidates, breaking news candidates}§ 
+§\textbf{Input: irc, listening on Wikipedia recent changes}§
+§\textbf{Output: breakingNewsCandidates, breaking news candidates}§
 
 
 monitoringLoop = {}
 articleClusters = {}
 breakingNewsCandidates = {}
- 
+
 §\textit{\# Event loop 1:}§
 §\textit{\# When a new message arrives}§
 irc.on.message §\textbf{do (article)}§
   langRefs = getLanguageReferences(article)
   articleRevs = getArticleRevisions(article)
-  cluster = clusterArticles(article, langRefs)  
-  
+  cluster = clusterArticles(article, langRefs)
+
   §\textit{\# Create new cluster for previously unseen article}§
   §\textbf{if}§ cluster not in monitoringLoop
     monitoringLoop.push(cluster)
     articleClusters.push(cluster)
     updateStatistics(cluster)
-    emit.newCluster(cluster, articleRevs)    
+    emit.newCluster(cluster, articleRevs)
   §\textit{\# Update existing cluster, as the article was seen before}§
   §\textbf{else}§
     updateStatistics(cluster)
     emit.existingCluster(cluster, articleRevs)
     §\textit{\# Check breaking news criteria}§
     §\textbf{if}§ cluster.occurrences >= 5
-      §\textbf{if}§ cluster.secsBetweenEdits <= 60      
+      §\textbf{if}§ cluster.secsBetweenEdits <= 60
         §\textbf{if}§ cluster.numEditors >= 2
           §\textbf{if}§ cluster.secsSinceLastEdit <= 240
             socialNetworks.search(langRefs)
             breakingNewsCandidates.push(cluster)
-            emit.breakingNewsCandidate(cluster)            
-          §\textbf{end if}§          
-        §\textbf{end if}§  
-      §\textbf{end if}§        
-    §\textbf{end if}§          
+            emit.breakingNewsCandidate(cluster)
+          §\textbf{end if}§
+        §\textbf{end if}§
+      §\textbf{end if}§
+    §\textbf{end if}§
   §\textbf{end if}§
   §\textbf{return}§ breakingNewsCandidates
 §\textbf{end do}§
@@ -435,7 +435,7 @@ timeout.every.240seconds §\textbf{do}§
       monitoringLoop.remove(cluster)
       articleClusters.remove(cluster)
     §\textbf{end if}§
-  §\textbf{end for}§ 
+  §\textbf{end for}§
 §\textbf{end do}§
 \end{lstlisting}
 
@@ -464,7 +464,7 @@ In the paper, they suggest that Wikipedia lags about two hours behind Twitter.
 It has to be noted that they look at hourly accumulated page (article) \emph{view} logs,
 where we look at realtime article \emph{edit} log streams.
 Our experiments suggest that the lag time of two hours
-proposed by Osborne \emph{et~al.} may be too conservative. 
+proposed by Osborne \emph{et~al.} may be too conservative.
 An educated guesstimation at this stage is that the lag time
 for breaking news is more in the range of 30 minutes,
 and for global breaking news like celebrity deaths
@@ -478,7 +478,7 @@ of the resignation of \emph{Pope Benedict~XVI} helps respond to (Q1).
 The three first edit times after the news broke on February 11, 2013
 of the Pope's English Wikipedia article%
 \footnote{Edit history en: \url{http://en.wikipedia.org/w/index.php?title=Pope_Benedict_XVI&action=history},
-accessed 02/18/2013} 
+accessed 02/18/2013}
 are as follows
 (all times in UTC): 10:58, 10:59, 11:02.
 The edit times of the French article%
@@ -527,7 +527,7 @@ that usually will not be important.
 In contrast, the category ``Living people'' being removed from an article
 is a~strong indicator of breaking (sad) news.
 Second, the \emph{connection between social network search and Wikipedia edits}
-needs to be made clearer. 
+needs to be made clearer.
 In an initial step, the concrete changes to an article, as detailed in
 \autoref{sec:comparing-article-revisions}, can be compared with
 social network microposts using a~cosine similarity measure.
@@ -549,6 +549,6 @@ we have shown promising preliminary results
 and actionable next steps in future work for improving the application.
 
 \bibliographystyle{abbrv}
-\bibliography{www2013devtrack}
+\bibliography{ramss04s-steiner}
 
 \end{document}

@@ -566,9 +566,14 @@ function monitorWikipedia() {
             (diffUrl.indexOf('oldid') !== -1)) {
           var toRev = diffUrl.replace(/.*\?diff=(\d+).*/, '$1');
           var fromRev = diffUrl.replace(/.*&oldid=(\d+).*/, '$1');
-          diffUrl = 'http://' + language +
-              '.wikipedia.org/w/api.php?action=compare&torev=' + toRev +
-              '&fromrev=' + fromRev + '&format=json';
+          if (language === 'wikidata') {
+            diffUrl = 'http://wikidata.org/w/api.php?action=compare&torev=' +
+                toRev + '&fromrev=' + fromRev + '&format=json';
+          } else {
+            diffUrl = 'http://' + language +
+                '.wikipedia.org/w/api.php?action=compare&torev=' + toRev +
+                '&fromrev=' + fromRev + '&format=json';
+          }
         } else {
           diffUrl = '';
         }

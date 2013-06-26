@@ -19,7 +19,7 @@ var REALLY_VERBOUS = false;
 var USE_WEBSOCKETS = true;
 
 // whether to monitor the 1,000,000+ articles Wikipedias
-var MONITOR_SHORT_TAIL_WIKIPEDIAS = false;
+var MONITOR_SHORT_TAIL_WIKIPEDIAS = true;
 
 // whether to monitor the 100,000+ articles Wikipedias
 var MONITOR_LONG_TAIL_WIKIPEDIAS = false;
@@ -28,7 +28,7 @@ var MONITOR_LONG_TAIL_WIKIPEDIAS = false;
 var MONITOR_REALLY_LONG_TAIL_WIKIPEDIAS = false;
 
 // whether to monitor the knowledge base Wikidata
-var MONITOR_WIKIDATA = true;
+var MONITOR_WIKIDATA = false;
 
 // required for Wikipedia API
 var USER_AGENT = 'Wikipedia Live Monitor * IRC nick: wikipedia-live-monitor * Contact: tomac(a)google.com.';
@@ -586,10 +586,15 @@ function monitorWikipedia() {
         var comment = messageComponents[2].replace(deltaAndCommentRegExp, '$2');
 
         // used to get the language references for language clustering
-        var languageClusterUrl = 'http://' + language +
-            '.wikipedia.org/w/api.php?action=query&prop=langlinks' +
-            '&format=json&lllimit=500&titles=' + article;
-
+        var languageClusterUrl;
+        if (language === 'wikidata') {
+          languageClusterUrl = 'http://www.wikidata.org/w/api.php?' +
+              'action=wbgetentities&props=sitelinks&format=json&ids=' + article;
+        } else {
+          languageClusterUrl = 'http://' + language +
+              '.wikipedia.org/w/api.php?action=query&prop=langlinks' +
+              '&format=json&lllimit=500&titles=' + article;
+        }
         // get language references via the Wikipedia API
         article = language + ':' + article;
         request.get({
@@ -602,6 +607,14 @@ function monitorWikipedia() {
             getLanguageReferences(error, response, body, article);
           }
         );
+
+        // TODO
+        // get out-links to other articles mentioned in the current article
+        // http://en.wikipedia.org/w/api.php?action=query&prop=links&pllimit=500&format=json&titles=
+
+        // TODO
+        // get in-links to the current article
+        // http://en.wikipedia.org/w/api.php?action=query&list=backlinks&bllimit=500&format=json&bltitle=
 
         // get the diff URL and check if we have notable or trivial changes
         if (diffUrl) {
@@ -946,7 +959,7 @@ function strip_tags (input, allowed) {
   });
 }
 
-// extracts Wikipedia concepts (i.e., interwiki links)
+// extracts Wikipedia concepts (i.e., links to other articles)
 function extractWikiConcepts(text, language) {
   var concepts = [];
   text = text.replace(/\[\[(.*?)\]\]/g, function(m, l) {
@@ -1005,6 +1018,23 @@ function removeWikiMarkup(text) {
 // callback function for getting language references from the Wikipedia API
 // for an article
 function getLanguageReferences(error, response, body, article) {
+
+  // helper function to insert language versions
+  var insertArticle = function(language, title) {
+    if (((MONITOR_SHORT_TAIL_WIKIPEDIAS) &&
+            (millionPlusLanguages[language])) ||
+        ((MONITOR_LONG_TAIL_WIKIPEDIAS) &&
+            (oneHundredThousandPlusLanguages[language])) ||
+        ((MONITOR_REALLY_LONG_TAIL_WIKIPEDIAS) &&
+            (reallyLongTailWikipedias[language]))) {
+      var articleVersion = language + ':' + title;
+      articleClusters[article][articleVersion] = true;
+      articleVersionsMap[articleVersion] = article;
+console.log(articleClusters)
+console.log(articleVersionsMap)
+    }
+  };
+
   if (!error && response.statusCode == 200) {
     var json;
     try {
@@ -1012,27 +1042,36 @@ function getLanguageReferences(error, response, body, article) {
     } catch(e) {
       json = false;
     }
-    if (json && json.query && json.query.pages) {
-      var pages = json.query.pages;
-      for (id in pages) {
-        var page = pages[id];
-        if (!articleClusters[article]) {
-          articleClusters[article] = {};
+    if (json) {
+      var language = article.split(':')[0];
+      if (language === 'wikidata') {
+        var wikidataId = article.split(':')[1].toLowerCase();
+        if ((json.entities) &&
+            (json.entities[wikidataId]) &&
+            (json.entities[wikidataId].sitelinks)) {
+          var sitelinks = json.entities[wikidataId].sitelinks;
+          for (var languageWiki in sitelinks) {
+            var language = languageWiki.replace(/wiki$/, '');
+            var title = sitelinks[languageWiki].title.replace(/\s/g, '_');
+            insertArticle(language, title);
+          }
         }
-        if (page.langlinks) {
-          page.langlinks.forEach(function(langLink) {
-            var lang = langLink.lang;
-            if ((millionPlusLanguages[lang]) ||
-                ((MONITOR_LONG_TAIL_WIKIPEDIAS) &&
-                    (oneHundredThousandPlusLanguages[lang])) ||
-                ((MONITOR_REALLY_LONG_TAIL_WIKIPEDIAS) &&
-                    (reallyLongTailWikipedias[lang]))) {
-              var title = langLink['*'].replace(/\s/g, '_');
-              var articleVersion = lang + ':' + title;
-              articleClusters[article][articleVersion] = true;
-              articleVersionsMap[articleVersion] = article;
+      } else {
+        if (json.query && json.query.pages) {
+          var pages = json.query.pages;
+          for (id in pages) {
+            var page = pages[id];
+            if (!articleClusters[article]) {
+              articleClusters[article] = {};
             }
-          });
+            if (page.langlinks) {
+              page.langlinks.forEach(function(langLink) {
+                var language = langLink.lang;
+                var title = langLink['*'].replace(/\s/g, '_');
+                insertArticle(language, title);
+              });
+            }
+          }
         }
       }
     }
@@ -1264,8 +1303,9 @@ function email(article, microposts) {
   smtpTransport.sendMail(mailOptions, function(error, response) {
     if (error) {
       console.warn(error);
-    } else{
+    } else {
       console.log('Message sent: ' + response.message);
+      // https://groups.google.com/forum/feed/wikipedialivemonitor/msgs/atom.xml?num=15
     }
   });
 }

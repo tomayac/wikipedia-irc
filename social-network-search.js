@@ -1,8 +1,16 @@
 var request = require('request');
+var twitter = require('ntwitter');
+
+var twit = new twitter({
+  consumer_key: process.env.TWITTER_CONSUMER_KEY,
+  consumer_secret: process.env.TWITTER_CONSUMER_SECRET,
+  access_token_key: process.env.TWITTER_ACCESS_TOKEN_KEY,
+  access_token_secret: process.env.TWITTER_ACCESS_TOKEN_SECRET
+});
 
 // Google+: https://developers.google.com/+/api/latest/activities/search
 // Facebook: https://developers.facebook.com/docs/reference/api/#searching
-// Twitter: https://dev.twitter.com/docs/api/1/get/search
+// Twitter: https://dev.twitter.com/docs/api/1.1/get/search
 
 // global configuration data
 var MAX_RESULTS = 2;
@@ -32,21 +40,17 @@ var socialNetworkSearch = function(terms, callback) {
       });
     },
     Twitter: function(term) {
-      var url = 'https://search.twitter.com/search.json?';
-      var q = 'q=' + encodeURIComponent('"' + term + '" -"RT "');
-      var rpp = '&rpp=' + MAX_RESULTS;
-      var resultType = '&result_type=recent';
-      var includeEntities = '&include_entities=true';
-      url += q + rpp + resultType + includeEntities;
-      request.get(url, function(error, response, body) {
-        if (!error && response.statusCode == 200) {
-          var json;
-          try {
-            json = JSON.parse(body);
-          } catch(e) {
-            json = false;
-          }
-          retrieveTwitterResults(json.results, networksDelivered, term);
+      twit.search(
+          encodeURIComponent('"' + term + '" -"RT "'),
+          {
+            rpp: MAX_RESULTS,
+            result_type: 'recent',
+            include_entities: true,
+          },
+          function(err, body) {
+console.log(err)
+        if ((body.statuses) && (body.statuses.length)) {
+          retrieveTwitterResults(body.statuses, networksDelivered, term);
         } else {
           retrieveTwitterResults({}, networksDelivered, term);
         }
@@ -79,8 +83,8 @@ var socialNetworkSearch = function(terms, callback) {
     if (results.length) {
       var curatedResults = [];
       results.forEach(function(result) {
-        var user = result.from_user;
-        var realname = result.from_user_name;
+        var user = result.user.screen_name;
+        var realname = result.user.name;
         var micropost = result.text;
         var avatar = result.profile_image_url_https;
         var creationDate = result.created_at;

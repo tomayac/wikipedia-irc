@@ -48,8 +48,7 @@ var socialNetworkSearch = function(terms, callback) {
             include_entities: true,
           },
           function(err, body) {
-console.log(err)
-        if ((body.statuses) && (body.statuses.length)) {
+        if ((!err) && (body.statuses) && (body.statuses.length)) {
           retrieveTwitterResults(body.statuses, networksDelivered, term);
         } else {
           retrieveTwitterResults({}, networksDelivered, term);

@@ -13,7 +13,7 @@ var wiki2html = require('./wiki2html.js');
 var wikipedias = require('./wikipedias.js');
 
 // verbous debug mode
-var VERBOUS = true;
+var VERBOUS = false;
 // really very verbous debug mode
 var REALLY_VERBOUS = false;
 // use WebSocket reporting

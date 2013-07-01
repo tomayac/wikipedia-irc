@@ -465,61 +465,59 @@ function monitorWikipedia() {
       // check the three breaking news conditions:
       var breakingNewsConditions =
           checkBreakingNewsConditions(articles[article]);
-
-      // search for all article titles in social networks
-      var searchTerms = {};
-      // use the article title as search term
-      searchTerms[article.split(':')[1].replace(/_/g, ' ')] = true;
-      // use the article URL as search term
-      searchTerms[createWikipediaUrl(article)] = true;
-      for (var key in articles[article].versions) {
-        // use the article URL as search term
-        var wikipediaUrl = createWikipediaUrl(key);
-        searchTerms[wikipediaUrl] = true;
-        // use the article title as search term
-        var articleTitle = key.split(':')[1].replace(/_/g, ' ');
-        if (!searchTerms[articleTitle]) {
-          searchTerms[articleTitle] = true;
-        }
+      // reporting WebSockets
+      if (USE_WEBSOCKETS) {
+        io.sockets.emit('nTimesSeen', {
+          article: article,
+          occurrences: articles[article].occurrences,
+          timestamp: new Date(articles[article].timestamp).toString(),
+          editIntervals: articles[article].intervals,
+          editors: articles[article].editors,
+          languages: articles[article].languages,
+          versions: articles[article].versions,
+          changes: articles[article].changes,
+          conditions: {
+            breakingNewsThreshold:
+                breakingNewsConditions.breakingNewsThresholdReached,
+            secondsBetweenEdits:
+                breakingNewsConditions.allEditsInShortDistances,
+            numberOfConcurrentEditors:
+                breakingNewsConditions.numberOfEditorsReached
+          }
+        });
       }
-      socialNetworkSearch(searchTerms, function(socialNetworksResults) {
-        // reporting WebSockets
-        if (USE_WEBSOCKETS) {
-          io.sockets.emit('nTimesSeen', {
-            article: article,
-            occurrences: articles[article].occurrences,
-            timestamp: new Date(articles[article].timestamp).toString(),
-            editIntervals: articles[article].intervals,
-            editors: articles[article].editors,
-            languages: articles[article].languages,
-            versions: articles[article].versions,
-            changes: articles[article].changes,
-            conditions: {
-              breakingNewsThreshold:
-                  breakingNewsConditions.breakingNewsThresholdReached,
-              secondsBetweenEdits:
-                  breakingNewsConditions.allEditsInShortDistances,
-              numberOfConcurrentEditors:
-                  breakingNewsConditions.numberOfEditorsReached
-            },
-            socialNetworksResults: socialNetworksResults
-          });
+      // reporting console
+      if (VERBOUS) {
+        console.log('[ ! ] ' + articles[article].occurrences + ' ' +
+            'times seen: "' + article + '". ' +
+            'Timestamp: ' + new Date(articles[article].timestamp) +
+            '. Edit intervals: ' + articles[article].intervals.toString()
+            .replace(/(\d+),?/g, '$1ms ').trim() + '. ' +
+            'Parallel editors: ' + articles[article].editors.length +
+            '. Editors: ' + articles[article].editors + '. ' +
+            'Languages: ' + JSON.stringify(articles[article].languages));
+      }
+      // check if all three breaking news conditions are fulfilled at once
+      if ((breakingNewsConditions.breakingNewsThresholdReached) &&
+          (breakingNewsConditions.allEditsInShortDistances) &&
+          (breakingNewsConditions.numberOfEditorsReached)) {
+        // search for all article titles in social networks
+        var searchTerms = {};
+        // use the article title as search term
+        searchTerms[article.split(':')[1].replace(/_/g, ' ')] = true;
+        // use the article URL as search term
+        searchTerms[createWikipediaUrl(article)] = true;
+        for (var key in articles[article].versions) {
+          // use the article URL as search term
+          var wikipediaUrl = createWikipediaUrl(key);
+          searchTerms[wikipediaUrl] = true;
+          // use the article title as search term
+          var articleTitle = key.split(':')[1].replace(/_/g, ' ');
+          if (!searchTerms[articleTitle]) {
+            searchTerms[articleTitle] = true;
+          }
         }
-        // reporting console
-        if (VERBOUS) {
-          console.log('[ ! ] ' + articles[article].occurrences + ' ' +
-              'times seen: "' + article + '". ' +
-              'Timestamp: ' + new Date(articles[article].timestamp) +
-              '. Edit intervals: ' + articles[article].intervals.toString()
-              .replace(/(\d+),?/g, '$1ms ').trim() + '. ' +
-              'Parallel editors: ' + articles[article].editors.length +
-              '. Editors: ' + articles[article].editors + '. ' +
-              'Languages: ' + JSON.stringify(articles[article].languages));
-        }
-        // check if all three breaking news conditions are fulfilled at once
-        if ((breakingNewsConditions.breakingNewsThresholdReached) &&
-            (breakingNewsConditions.allEditsInShortDistances) &&
-            (breakingNewsConditions.numberOfEditorsReached)) {
+        socialNetworkSearch(searchTerms, function(socialNetworksResults) {
           // reporting WebSockets
           if (USE_WEBSOCKETS) {
             io.sockets.emit('breakingNewsCandidate', {
@@ -574,8 +572,8 @@ function monitorWikipedia() {
                 'Languages: ' +
                 JSON.stringify(articles[article].languages));
           }
-        }
-      });
+        });
+      }
     }
   });
 }

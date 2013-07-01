@@ -839,8 +839,13 @@ function cleanUpMonitoringLoop() {
 
 function createWikipediaUrl(article) {
   var components = article.split(':');
-  return 'http://' + components[0] + '.wikipedia.org/wiki/' +
-      encodeURIComponent(components[1]);
+  if (components[0] === 'wikidata') {
+    return 'http://' + components[0] + '.org/wiki/' +
+        encodeURIComponent(components[1]);
+  } else {
+    return 'http://' + components[0] + '.wikipedia.org/wiki/' +
+        encodeURIComponent(components[1]);
+  }
 }
 
 function email(article, microposts) {

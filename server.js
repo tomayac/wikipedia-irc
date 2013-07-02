@@ -587,7 +587,8 @@ function getDiffUrl(error, response, body, article, now) {
     } catch(e) {
       json = false;
     }
-    if (json && json.compare && json.compare['*'] && articles[article]) {
+    if ((json && json.compare && json.compare['*']) &&
+        (articles[article] && articles[article].changes[now])) {
       var parsedHtml = $.load(json.compare['*']);
       var addedLines = parsedHtml('.diff-addedline');
       var diffTexts = [];

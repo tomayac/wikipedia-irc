@@ -31,9 +31,6 @@ var MONITOR_REALLY_LONG_TAIL_WIKIPEDIAS = true;
 // whether to monitor the knowledge base Wikidata
 var MONITOR_WIKIDATA = true;
 
-// required for Wikipedia API
-var USER_AGENT = 'Wikipedia Live Monitor * IRC nick: wikipedia-live-monitor * Contact: tomac(a)google.com.';
-
 // an article cluster is thrown out of the monitoring loop if its last edit is
 // longer ago than SECONDS_SINCE_LAST_EDIT seconds
 var SECONDS_SINCE_LAST_EDIT = 240;
@@ -56,8 +53,12 @@ var DISCARD_WIKIPEDIA_BOTS = true;
 
 // IRC details for the recent changes live updates
 var IRC_SERVER = 'irc.wikimedia.org';
-var IRC_NICK = 'wikipedia-live-monitor';
+var IRC_NICK = 'wikipedia-live-monitor-' + Date.now();
 var IRC_REAL_NAME_AND_CONTACT = 'Thomas Steiner (tomac@google.com)';
+
+// required for Wikipedia API
+var USER_AGENT = 'Wikipedia Live Monitor * IRC nick: ' + IRC_NICK +
+    ' * Contact: tomac(a)google.com.';
 
 // the maximum length of http://t.co links
 var TWITTER_SHORT_URL_LENGTH = 23;

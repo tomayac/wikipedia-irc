@@ -116,9 +116,15 @@ DIV.settings {
   right: 400px;
 }
 
-#followWidget {
+#followWidget1 {
   position: absolute;
   top: 20px;
+  right: 80px;
+}
+
+#followWidget2 {
+  position: absolute;
+  top: 50px;
   right: 80px;
 }
 

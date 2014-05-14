@@ -1,12 +1,12 @@
 var request = require('request');
-var twitter = require('ntwitter');
+var twitter = require('node-twitter');
 
-var twit = new twitter({
-  consumer_key: process.env.TWITTER_CONSUMER_KEY,
-  consumer_secret: process.env.TWITTER_CONSUMER_SECRET,
-  access_token_key: process.env.TWITTER_ACCESS_TOKEN_KEY,
-  access_token_secret: process.env.TWITTER_ACCESS_TOKEN_SECRET
-});
+var twit = new twitter.SearchClient(
+  process.env.TWITTER_CONSUMER_KEY,
+  process.env.TWITTER_CONSUMER_SECRET,
+  process.env.TWITTER_ACCESS_TOKEN_KEY,
+  process.env.TWITTER_ACCESS_TOKEN_SECRET
+);
 
 // Google+: https://developers.google.com/+/api/latest/activities/search
 // Facebook: https://developers.facebook.com/docs/reference/api/#searching
@@ -41,8 +41,8 @@ var socialNetworkSearch = function(terms, callback) {
     },
     Twitter: function(term) {
       twit.search(
-          encodeURIComponent('"' + term + '" -"RT "'),
           {
+            q: '"' + term + '" -"RT "',
             rpp: MAX_RESULTS,
             result_type: 'recent',
             include_entities: true,

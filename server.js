@@ -6,7 +6,7 @@ var app = express();
 var server = http.createServer(app);
 var io = require('socket.io').listen(server);
 var $ = require('cheerio');
-var twitter = require('ntwitter');
+var twitter = require('node-twitter');
 var nodemailer = require("nodemailer");
 var socialNetworkSearch = require('./social-network-search.js');
 var wiki2html = require('./wiki2html.js');
@@ -83,19 +83,12 @@ if (EMAIL_BREAKING_NEWS_CANDIDATES) {
 }
 
 if (TWEET_BREAKING_NEWS_CANDIDATES) {
-  var twit = new twitter({
-    consumer_key: process.env.TWITTER_CONSUMER_KEY,
-    consumer_secret: process.env.TWITTER_CONSUMER_SECRET,
-    access_token_key: process.env.TWITTER_ACCESS_TOKEN_KEY,
-    access_token_secret: process.env.TWITTER_ACCESS_TOKEN_SECRET
-  });
-
-  twit.verifyCredentials(function(err, data) {
-    if (err) {
-      console.warn('Twitter authentication error: ' + err);
-    }
-  });
-
+  var twit = new twitter.RestClient(
+    process.env.TWITTER_CONSUMER_KEY,
+    process.env.TWITTER_CONSUMER_SECRET,
+    process.env.TWITTER_ACCESS_TOKEN_KEY,
+    process.env.TWITTER_ACCESS_TOKEN_SECRET
+  );
   var recentTweetsBuffer = [];
 }
 
@@ -1067,7 +1060,9 @@ function tweet(article, occurrences, editors, languages, microposts) {
     text += 'N/A]';
   }
   console.log('Tweeting: ' + text);
-  twit.updateStatus(text, function (err, data) {
+  twit.statusesUpdate({
+    status: text
+  }, function (err, data) {
     if (err) {
       console.warn('Tweet error: ' + err);
     }

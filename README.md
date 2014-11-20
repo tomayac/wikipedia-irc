@@ -1,10 +1,1 @@
-Wikipedia IRC
-=============
-
-Try to spot new trends based on Wikipedia live edit spikes. 
-A demo is running on [Heroku](http://wikipedia-irc.herokuapp.com/).
-
-License
-=======
-
-Apache 2.0
+**Repo Moved!** Please use the [Wikipedia Live Monitor](https://github.com/tomayac/wikipedia-live-monitor) repo instead.
